@@ -12,7 +12,7 @@ cdef class Shape:
 
     def __init__(self):
         self._shape = NULL
-        self.automanaged = 0
+        self.automanaged = 1
 
     def __dealloc__(self):
         if self.automanaged:
@@ -120,10 +120,12 @@ cdef class Circle(Shape):
 
     This is the fastest and simplest collision shape
     '''
+    cdef float radius
 
     def __init__(self, Body body, cpFloat radius, offset=(0, 0)):
         Shape.__init__(self)
         self._body = body
+        self.radius = radius
         self._shape = cpCircleShapeNew(body._body, radius, cpv(offset[0], offset[1]))
         #self._cs = ct.cast(self._shape, ct.POINTER(cp.cpCircleShape))
 
@@ -139,8 +141,14 @@ cdef class Circle(Shape):
         '''
         cpCircleShapeSetOffset(self._shape, cpv(o.x, o.y))
 
-    #def _get_radius(self):
-    #    return cpCircleShapeGetRadius(self._shape)
+    property radius:
+        def __get__(self):
+            return self.radius
+        def __set__(self, radius):
+            self.radius = radius
+
+    def _get_radius(self):
+        return self.radius
     #radius = property(_get_radius)
 
     #def _get_offset (self):
@@ -191,12 +199,39 @@ cdef class Segment(Shape):
         def __get__(self):
             pass
 
+cdef class BoxShape(Shape):
+
+    cdef float width
+    cdef float height
+
+    def __init__(self, Body body, width, height):
+        Shape.__init__(self)
+        self._body = body
+        self.width = width
+        self.height = height
+        self._shape = cpBoxShapeNew(body._body, width, height)
+
+    property width:
+
+        def __get__(self):
+            return self.width
+        def __set__(self, width):
+            self.width = width
+
+    property height:
+        def __get__(self):
+            return self.height
+        def __set__(self, height):
+            self.height = height
+
+
 cdef class Poly(Shape):
 
     def __cinit__(self, Body body, vertices, offset=(0, 0), auto_order_vertices=True):
         Shape.__init__(self)
         self._body = body
         self.offset = offset
+
         #self.verts = (Vec2d * len(vertices))
         #self.verts = self.verts(Vec2d(0, 0))
 

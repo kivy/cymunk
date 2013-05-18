@@ -34,7 +34,7 @@ cdef class Body:
         Moment of the body
         '''
         def __get__(self):
-            return self._bodycontents.i
+            return self._body.i
         def __set__(self, moment):
             cpBodySetMoment(self._body, moment)
 
@@ -52,7 +52,7 @@ cdef class Body:
         The rotation vector of the body
         '''
         def __get__(self):
-            return self._bodycontents.rot
+            return self._body.rot
 
     property torque:
         def __get__(self):
@@ -96,6 +96,14 @@ cdef class Body:
         def __set__(self, f):
             self._body.f = cpv(f.x, f.y)
 
+    property data:
+        def __get__(self):
+            return self._body.data
+        def __set__(self, data):
+            self._body.data = data
+
+
+
     property is_sleeping:
         '''
         Returns true if the body is sleeping.
@@ -122,7 +130,7 @@ cdef class Body:
         Apply the impulse j to body at a relative offset (important!) r from
         the center of gravity. Both r and j are in world coordinates.
         '''
-        cpBodyApplyImpulse(self._body, cpv(j.x, j.y), cpv(r.x, r.y))
+        cpBodyApplyImpulse(self._body, cpv(j['x'], j['y']), cpv(r['x'], r['y']))
 
     def reset_forces(self):
         '''

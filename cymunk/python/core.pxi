@@ -9,7 +9,7 @@ def moment_for_circle(mass, inner_radius, outer_radius, offset=(0, 0)):
     '''
     Calculate the moment of inertia for a circle
     '''
-    return cpMomentForCircle(mass, inner_radius, outer_radius, cpv(offset.x, offset.y))
+    return cpMomentForCircle(mass, inner_radius, outer_radius, cpv(offset[0], offset[1]))
 
 
 def moment_for_segment(mass, a, b):
@@ -123,22 +123,22 @@ cdef class Contact:
             return self._dist
 
 
-#cdef class BB:
-    #cdef cpBB* _bb
-    #def __cinit__(self, *args):
-    #    if len(args) == 0:
-    #        self._bb = cpBB()
-    #    elif len(args) == 1:
-    #        self._bb = args[0]
-        #else:
-        #    self._bb = cpBBNew(args[0], args[1], args[2], args[3])
+cdef class BB:
+    cdef cpBB _bb
+    cdef float l
+    cdef float b
+    cdef float r
+    cdef float t
 
-    #def __repr__(self):
-    #    return 'BB(%s, %s, %s, %s)' % (self.left, self.bottom, self.right, self.top)
+    def __cinit__(self, float l, float b, float r, float t):
+        self._bb = cpBBNew(l, b, r, t)
 
-    #def __eq__(self, other):
-    #    return self.left == other.left and self.bottom == other.bottom and \
-    #        self.right == other.right and self.top == other.top
+    def __repr__(self):
+        return 'BB(%s, %s, %s, %s)' % (self._bb.l, self._bb.b, self._bb.r, self._bb.t)
+
+    # def __eq__(self, other):
+    #     return self.l == other.l and self.b == other.b and \
+    #         self.r == other.r and self.t == other.l
 
     #def __ne__(self, other):
     #    return not self.__eq__(other)
@@ -158,10 +158,25 @@ cdef class Contact:
     #def expand(self, v):
     #    return BB(cpBBExpand(self._bb, cpv(v.x, v.y)))
 
-    #left = property(lambda self: self._bb.l)
-    #bottom = property(lambda self: self._bb.b)
-    #right = property(lambda self: self._bb.r)
-    #top = property(lambda self: self._bb.t)
+    property _bb:
+        def __get__(self):
+            return self._bb
+
+    property l:
+        def __get__(self):
+            return self._bb.l
+
+    property b:
+        def __get__(self):
+            return self._bb.b
+
+    property r:
+        def __get__(self):
+            return self._bb.r
+
+    property t:
+        def __get__(self):
+            return self._bb.t
 
     #def clamp_vect(self, v):
     #    return cpBBClampVect(self._bb, cpv(v.x, v.y))
@@ -225,6 +240,7 @@ cdef class Arbiter:
             b = self._space._get_shape(shapeB_p)
             return a, b
 
+ 
     property elasticity:
         '''
         Elasticity

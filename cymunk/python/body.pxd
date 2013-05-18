@@ -20,6 +20,7 @@ cdef extern from "chipmunk/chipmunk.h":
     ctypedef void (*cpBodyVelocityFunc)(cpBody *body, cpVect gravity, cpFloat damping, cpFloat dt)
     cpBodyVelocityFunc velocity_func
 
+
     void cpBodyActivate(cpBody *body)
     void cpBodySleep(cpBody *body)
     void cpBodySleepWithGroup(cpBody *body, cpBody *group)
@@ -35,3 +36,4 @@ cdef extern from "chipmunk/chipmunk.h":
 cdef class Body:
     cdef cpBody* _body
     cdef int automanaged
+
