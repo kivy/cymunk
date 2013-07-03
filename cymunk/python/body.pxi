@@ -143,7 +143,7 @@ cdef class Body:
         Apply (accumulate) the force f on body at a relative offset
         (important!) r from the center of gravity.
         '''
-        cpBodyApplyForce(self._body, cpv(f.x, f.y), cpv(r.x, r.y))
+        cpBodyApplyForce(self._body, cpv(f['x'], f['y']), cpv(r['x'], r['y']))
 
     def activate(self):
         '''
