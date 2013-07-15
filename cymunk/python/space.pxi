@@ -11,6 +11,13 @@ cdef void _call_space_bb_query_func(cpShape *shape, void *data):
     py_shape = space.shapes[shape.hashid_private]
     handlers['bb_query_func'](py_shape)
 
+cdef void _call_space_segment_query_func(cpShape *shape, cpFloat t, cpVect n, void *data):
+    global current_spaces
+    global handlers
+    space = current_spaces[0]
+    py_shape = space.shapes[shape.hashid_private]
+    handlers['segment_query_func'](py_shape, t, n)
+
 
 cdef bool _call_collision_begin_func(cpArbiter *_arb, cpSpace *_space, void *_data):
     global current_spaces
@@ -443,13 +450,24 @@ cdef class Space:
     def register_bb_query_func(self, func):
         self._set_py_bb_query_func(func)
 
+    def register_segment_query_func(self, func):
+        self._set_py_segment_query_func(func)
+
     def _set_py_bb_query_func(self, func):
         global handlers
         handlers['bb_query_func'] = func
-        print handlers['bb_query_func']
 
-    def space_bb_query_func(self, bb, layers=1, group=0):
-        cpSpaceBBQuery(self._space, bb._bb, layers, group, _call_space_bb_query_func, NULL)
+    def _set_py_segment_query_func(self, func):
+        global handlers
+        handlers['segment_query_func'] = func
+
+    def space_segment_query(self, start_vect, end_vect, layers=1, group=0):
+        cpSpaceSegmentQuery(self._space, cpv(start_vect[0], start_vect[1]), cpv(end_vect[0], end_vect[1]), layers, group,
+            _call_space_segment_query_func, NULL)
+
+    def space_bb_query(self, bb, layers=1, group=0):
+        cpSpaceBBQuery(self._space, bb._bb, layers, group, 
+            _call_space_bb_query_func, NULL)
 
 
     cdef void _add_c_collision_handler(self, a, b):

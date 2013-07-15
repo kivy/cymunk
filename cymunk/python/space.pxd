@@ -63,9 +63,17 @@ cdef extern from "chipmunk/chipmunk.h":
     void cpSpaceRemoveStaticShape(cpSpace *space, cpShape *shape)
     void cpSpaceRemoveBody(cpSpace *space, cpBody *body)
     void cpSpaceRemoveConstraint(cpSpace *space, cpConstraint *constraint)
+
     ctypedef void(* cpSpaceBBQueryFunc)(cpShape *shape, void *data)
-    void cpSpaceBBQuery(cpSpace *space, cpBB bb, cpLayers layers, cpGroup group, cpSpaceBBQueryFunc func, void *data)
+    void cpSpaceBBQuery(cpSpace *space, cpBB bb, cpLayers layers, 
+        cpGroup group, cpSpaceBBQueryFunc func, void *data)
     
+    ctypedef void(* cpSpaceSegmentQueryFunc)(cpShape *shape, 
+        cpFloat t, cpVect n, void *data)
+    
+    void cpSpaceSegmentQuery(cpSpace *space, cpVect start, 
+        cpVect end, cpLayers layers, cpGroup group, 
+        cpSpaceSegmentQueryFunc, void *data)
 
     void cpSpaceReindexStatic(cpSpace *space)
     void cpSpaceReindexShape(cpSpace *space, cpShape *shape)
