@@ -26,4 +26,8 @@ cdef extern from "chipmunk/chipmunk.h":
 
 
     cpShape* cpPolyShapeNew(cpBody *body, int numVerts, cpVect *verts, cpVect offset)
+    
+    cpBool cpPolyValidate(cpVect *verts, int numVerts)
+    
+    cpVect cpPolyShapeGetVert(cpShape* shape, int idx)
 

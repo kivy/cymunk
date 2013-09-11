@@ -8,6 +8,7 @@ cdef class Body:
     '''
 
     def __cinit__(self, mass=None, moment=None):
+        self._data = None
         if mass is None and moment is None:
             self._body = cpBodyNewStatic()
         else:
@@ -98,11 +99,9 @@ cdef class Body:
 
     property data:
         def __get__(self):
-            return self._body.data
+            return self._data
         def __set__(self, data):
-            self._body.data = data
-
-
+            self._data = data
 
     property is_sleeping:
         '''

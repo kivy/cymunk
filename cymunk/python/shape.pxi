@@ -1,3 +1,5 @@
+from libc.stdlib cimport malloc, free
+
 cdef class Shape:
     '''
     Base class for all the shapes.
@@ -199,6 +201,11 @@ cdef class Segment(Shape):
         def __get__(self):
             pass
 
+# FIXME: This class is absent in Pymunk API,
+#        so it should be marked as depricated
+#        and ridded then. Poly.create_box
+#        should be used instead 
+
 cdef class BoxShape(Shape):
 
     cdef float width
@@ -227,41 +234,73 @@ cdef class BoxShape(Shape):
 
 cdef class Poly(Shape):
 
-    def __cinit__(self, Body body, vertices, offset=(0, 0), auto_order_vertices=True):
+    cdef cpVect* _verts
+    cdef list    verts
+    cdef tuple   offset
+
+    def __init__(self, Body body, vertices, offset=(0, 0), radius=0):
+        
+        cdef int num_of_verts
+        cdef object vec
+        cdef cpVect _offset
+        
         Shape.__init__(self)
         self._body = body
+        
+        num_of_verts = len(vertices)
+        self._set_verts(vertices, num_of_verts)
+        self._verts = <cpVect*>malloc(sizeof(cpVect)*num_of_verts) # deallocate this!!!
+
+        for i in range(num_of_verts):
+            vec = self.verts[i]
+            self._verts[i] = cpv(vec.x, vec.y)
+        
         self.offset = offset
+        _offset = cpv(offset[0], offset[1])
 
-        #self.verts = (Vec2d * len(vertices))
-        #self.verts = self.verts(Vec2d(0, 0))
+        self._shape = cpPolyShapeNew(body._body, num_of_verts, self._verts, _offset)
+        
+    def __dealloc__(self):
+        free(self._verts)
 
+    def _set_verts(self, list vertices, int num_of_verts):
+        auto_order_vertices = True
+        self.verts = []
+        for i in range(num_of_verts):
+            self.verts.append(Vec2d(0, 0))
+        
         i_vs = enumerate(vertices)
-        #if auto_order_vertices and not u.is_clockwise(vertices):
-        #    i_vs = zip(range(len(vertices)-1, -1, -1), vertices)
-
-        for i, vertex in i_vs:
+        if auto_order_vertices and not is_clockwise(vertices):
+            i_vs = zip(range(len(vertices)-1, -1, -1), vertices)
+        
+        for (i, vertex) in i_vs:
             self.verts[i].x = vertex[0]
             self.verts[i].y = vertex[1]
 
-        #self._shape = cpPolyShapeNew(body._body, len(vertices), self.verts, offset)
+    @staticmethod
+    def create_box(body, size=(10,10), offset=(0, 0), radius=0):
+        
+        x,y = size[0]*.5,size[1]*.5
+        vs = [(-x,-y),(-x,y),(x,y),(x,-y)]
+        
+        return Poly(body,vs)
 
+    def get_vertices(self): 
+        """Get the vertices in world coordinates for the polygon
+        
+        :return: [`Vec2d`] in world coords
+        """
 
-    #@staticmethod
-    #def create_box(body, size=(10,10)):
-    #    x,y = size[0]*.5,size[1]*.5
-    #    vs = [(-x,-y),(-x,y),(x,y),(x,-y)]
-    #    return Poly(body,vs)
-
-    #def get_points(self):
-    #    points = []
-    #    rv = self._body.rotation_vector
-    #    bp = self._body.position
-    #    vs = self.verts
-    #    o = self.offset
-    #    for i in range(len(vs)):
-    #        p = (vs[i]+o).cpvrotate(rv)+bp
-    #        points.append(Vec2d(p))
-    #    return points
+        points = []
+        rv = self._body.rotation_vector
+        bp = self._body.position
+        vs = self.verts
+        o = self.offset
+        for i in range(len(vs)):
+            p = (vs[i]+o).cpvrotate(rv)+bp
+            points.append(Vec2d(p))
+            
+        return points
 
 
 cdef class SegmentQueryInfo:

@@ -468,7 +468,15 @@ cdef class Space:
     def space_bb_query(self, bb, layers=1, group=0):
         cpSpaceBBQuery(self._space, bb._bb, layers, group, 
             _call_space_bb_query_func, NULL)
-
+        
+    def point_query_first(self, Vec2d point, layers=1, group=0):
+        cdef cpShape* _shape
+        _shape = cpSpacePointQueryFirst(self._space, point.v, layers, group)
+        if not _shape:
+            return None
+        else:
+            return self._shapes.get(_shape.hashid_private, None) \
+                    or self._static_shapes.get(_shape.hashid_private, None)
 
     cdef void _add_c_collision_handler(self, a, b):
         cpSpaceAddCollisionHandler(self._space, a, b, _call_collision_begin_func, _call_collision_pre_solve_func, _call_collision_post_solve_func, _call_collision_separate_func, NULL)

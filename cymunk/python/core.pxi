@@ -2,6 +2,8 @@
 #: Version of Cymunk
 __version__ = '0.1'
 
+X, Y = 0, 1
+
 # init the library, whatever we will do.
 cpInitChipmunk()
 
@@ -46,6 +48,21 @@ def reset_shapeid_counter():
     (very) slight differences in the simulation.
     '''
     cpResetShapeIdCounter()
+
+
+def is_clockwise(points): 
+    """
+    Check if the points given forms a clockwise polygon
+    
+    :return: True if the points forms a clockwise polygon
+    """
+    a = 0
+    i, j = 0, 0
+    for i in range(len(points)):
+        j = i + 1
+        if j == len(points): j = 0
+        a += points[i][X]*points[j][Y] - points[i][Y]*points[j][X]
+    return a <= 0 #or is it the other way around?
 
 
 cdef class Vec2d:

@@ -70,6 +70,8 @@ cdef extern from "chipmunk/chipmunk.h":
     
     ctypedef void(* cpSpaceSegmentQueryFunc)(cpShape *shape, 
         cpFloat t, cpVect n, void *data)
+        
+    cpShape* cpSpacePointQueryFirst(cpSpace *space, cpVect point, cpLayers layers, cpGroup group)
     
     void cpSpaceSegmentQuery(cpSpace *space, cpVect start, 
         cpVect end, cpLayers layers, cpGroup group, 
