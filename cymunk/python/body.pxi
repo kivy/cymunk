@@ -9,6 +9,7 @@ cdef class Body:
 
     def __cinit__(self, mass=None, moment=None):
         self._data = None
+        self._constraints = []
         if mass is None and moment is None:
             self._body = cpBodyNewStatic()
         else:

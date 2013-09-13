@@ -1,8 +1,8 @@
+include "constraint.pxi"
 include "core.pxi"
 include "body.pxi"
 include "shape.pxi"
 include "space.pxi"
-include "constraint.pxi"
 
 from types import ModuleType
 
@@ -22,4 +22,6 @@ class ConstraintsModule(ModuleType):
     pass
 
 constraint = ConstraintsModule('cymunk.constraint')
+constraint.Constraint = Constraint
+constraint.PivotJoint = PivotJoint
 

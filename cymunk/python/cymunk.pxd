@@ -124,6 +124,7 @@ cdef extern from "chipmunk/chipmunk.h":
     cpVect cpArbiterGetNormal(cpArbiter *arb, int i)
     cpVect cpArbiterGetPoint(cpArbiter *arb, int i)
     cpFloat cpArbiterGetDepth(cpArbiter *arb, int i)
+    cpFloat cpArbiterTotalKE(const cpArbiter *arb)
 
 
 
@@ -131,3 +132,4 @@ include "core.pxd"
 include "body.pxd"
 include "shape.pxd"
 include "space.pxd"
+include "constraint.pxd"

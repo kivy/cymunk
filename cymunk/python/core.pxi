@@ -1,4 +1,6 @@
 
+import math
+
 #: Version of Cymunk
 __version__ = '0.1'
 
@@ -100,6 +102,18 @@ cdef class Vec2d:
 
     def __repr__(self):
         return '<cymunk.Vec2d x=%f y=%f>' % (self.v.x, self.v.y)
+    
+    def rotate(self, angle_radians):
+        """Rotate the vector by angle_radians radians."""
+        cdef float x
+        cdef float y
+        
+        cos = math.cos(angle_radians)
+        sin = math.sin(angle_radians)
+        x = self.v.x*cos - self.v.y*sin
+        y = self.v.x*sin + self.v.y*cos
+        self.v.x = x
+        self.v.y = y
 
 cdef class Contact:
     '''
@@ -312,4 +326,13 @@ cdef class Arbiter:
         '''
         def __get__(self):
             return cpArbiterIsFirstContact(self._arbiter)
+    
+    property total_ke:
+        """The amount of energy lost in a collision including static, but 
+        not dynamic friction.
+        
+        This property should only be called from a post-solve, post-step"""
+        
+        def __get__(self):
+            return cpArbiterTotalKE(self._arbiter)
 

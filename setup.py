@@ -26,12 +26,12 @@ c_chipmunk_files = [join(c_chipmunk_src, x) for x in (
 
 if have_cython:
     cymunk_files = [
-        'cymunk/python/cymunk.pyx',
+        'cymunk/python/constraint.pxi',
         'cymunk/python/core.pxi',
         'cymunk/python/space.pxi',
         'cymunk/python/shape.pxi',
         'cymunk/python/body.pxi',
-        'cymunk/python/constraint.pxi'
+        'cymunk/python/cymunk.pyx'
         ]
     cmdclass = {'build_ext': build_ext}
 else:

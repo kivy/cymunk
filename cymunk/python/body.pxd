@@ -37,4 +37,4 @@ cdef class Body:
     cdef cpBody* _body
     cdef int automanaged
     cdef object _data
-
+    cdef list _constraints
