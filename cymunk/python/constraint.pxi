@@ -54,9 +54,7 @@ cdef class Constraint:
 
     def remove_from_constraint_handlers(self):
         global constraint_handlers
-        print constraint_handlers
         del constraint_handlers[self._constraint.data]
-        print constraint_handlers
 
     property max_force:
         """The maximum force that the constraint can use to act on the two 
@@ -167,7 +165,6 @@ cdef class PivotJoint(Constraint):
         anchors = []
         if len(args) == 1:
             if isinstance(args[0], Vec2d):
-                print args[0].v
                 pivot = args[0].v
             elif isinstance(args[0], tuple):
                 pivot = cpv(args[0][0], args[0][1])
