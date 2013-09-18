@@ -52,6 +52,12 @@ cdef class Constraint:
         if self.automanaged:
             cpConstraintFree(self._constraint)
 
+    def remove_from_constraint_handlers(self):
+        global constraint_handlers
+        print constraint_handlers
+        del constraint_handlers[self._constraint.data]
+        print constraint_handlers
+
     property max_force:
         """The maximum force that the constraint can use to act on the two 
         bodies. Defaults to infinity"""

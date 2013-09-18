@@ -379,7 +379,9 @@ cdef class Space:
             elif isinstance(o, Shape):
                 self._remove_shape(o)
             elif isinstance(o, Constraint):
+                o.remove_from_constraint_handlers()
                 self._remove_constraint(o)
+
             else:
                 for oo in o:
                     self.remove(oo)
