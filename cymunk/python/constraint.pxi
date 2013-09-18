@@ -25,17 +25,17 @@ cdef void _call_constraint_presolve_func(cpConstraint *constraint, cpSpace *spac
     global constraint_handlers
     global current_spaces
     py_space = current_spaces[0]
-    python_constraint = constraint.data
-    constraint_dict = constraint_handlers[python_constraint]
-    constraint_dict['pre_solve'](constraint_dict['constraint'], py_space)
+    py_constraint = <object><void *>constraint.data
+    constraint_dict = constraint_handlers[py_constraint]
+    constraint_dict['pre_solve'](py_constraint, py_space)
 
 cdef void _call_constraint_postsolve_func(cpConstraint *constraint, cpSpace *space):
     global constraint_handlers
     global current_spaces
     py_space = current_spaces[0]
-    python_constraint = constraint.data
-    constraint_dict = constraint_handlers[python_constraint]
-    constraint_dict['post_solve'](constraint_dict['constraint'], py_space)
+    py_constraint = <object><void *>constraint.data
+    constraint_dict = constraint_handlers[py_constraint]
+    constraint_dict['post_solve'](py_constraint, py_space)
 
 cdef class Constraint:
     """Base class of all constraints. 
@@ -49,12 +49,10 @@ cdef class Constraint:
         self.automanaged = 1
 
     def __dealloc__(self):
+        global constraint_handlers
+        del constraint_handlers[self]
         if self.automanaged:
             cpConstraintFree(self._constraint)
-
-    def remove_from_constraint_handlers(self):
-        global constraint_handlers
-        del constraint_handlers[self._constraint.data]
 
     property max_force:
         """The maximum force that the constraint can use to act on the two 
@@ -126,12 +124,12 @@ cdef class Constraint:
 
     def _set_py_presolve_handler(self, presolve_func):
         global constraint_handlers
-        constraint_handlers[self._constraint.data]['pre_solve'] = presolve_func
+        constraint_handlers[self]['pre_solve'] = presolve_func
 
 
     def _set_py_postsolve_handler(self, postsolve_func):
         global constraint_handlers
-        constraint_handlers[self._constraint.data]['post_solve'] = postsolve_func
+        constraint_handlers[self]['post_solve'] = postsolve_func
 
 
 cdef class PivotJoint(Constraint):
@@ -186,10 +184,9 @@ cdef class PivotJoint(Constraint):
             
         #self._pjc = cp.cast(self._constraint, ct.POINTER(cp.cpPivotJoint)).contents
         self._set_bodies(a,b)
-        cdef PyObject* ptr = <PyObject*>self
-        self._constraint.data = <cpDataPointer>ptr
+        self._constraint.data = <cpDataPointer><void *>self
         global constraint_handlers
-        constraint_handlers[self._constraint.data] = {'constraint': self}
+        constraint_handlers[self] = {}
     
 #    def _get_anchr1(self):
 #        return self._pjc.anchr1
