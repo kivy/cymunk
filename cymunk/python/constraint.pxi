@@ -23,16 +23,14 @@ from cpython.ref cimport PyObject
 
 cdef void _call_constraint_presolve_func(cpConstraint *constraint, cpSpace *space):
     global constraint_handlers
-    global current_spaces
-    py_space = current_spaces[0]
+    py_space = <object><void *>space.data
     py_constraint = <object><void *>constraint.data
     constraint_dict = constraint_handlers[py_constraint]
     constraint_dict['pre_solve'](py_constraint, py_space)
 
 cdef void _call_constraint_postsolve_func(cpConstraint *constraint, cpSpace *space):
     global constraint_handlers
-    global current_spaces
-    py_space = current_spaces[0]
+    py_space = <object><void *>space.data
     py_constraint = <object><void *>constraint.data
     constraint_dict = constraint_handlers[py_constraint]
     constraint_dict['post_solve'](py_constraint, py_space)

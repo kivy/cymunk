@@ -1,28 +1,24 @@
 from cpython.ref cimport PyObject, Py_INCREF, Py_DECREF, Py_XDECREF
 
 
-current_spaces = []
 handlers = {}
     
 cdef void _call_space_bb_query_func(cpShape *shape, void *data):
-    global current_spaces
     global handlers
-    space = current_spaces[0]
+    space = <object>data
     py_shape = space.shapes[shape.hashid_private]
     handlers['bb_query_func'](py_shape)
 
 cdef void _call_space_segment_query_func(cpShape *shape, cpFloat t, cpVect n, void *data):
-    global current_spaces
     global handlers
-    space = current_spaces[0]
+    space = <object>data
     py_shape = space.shapes[shape.hashid_private]
     handlers['segment_query_func'](py_shape, t, n)
 
 
 cdef bool _call_collision_begin_func(cpArbiter *_arb, cpSpace *_space, void *_data):
-    global current_spaces
     global handlers
-    space = current_spaces[0]
+    space = <object><void *>_space.data
     arbiter = Arbiter(space)
     arbiter._arbiter = _arb
     a = arbiter.shapes[0].collision_type
@@ -35,9 +31,8 @@ cdef bool _call_collision_begin_func(cpArbiter *_arb, cpSpace *_space, void *_da
     return True
 
 cdef bool _call_collision_pre_solve_func(cpArbiter *_arb, cpSpace *_space, void *_data):
-    global current_spaces
     global handlers
-    space = current_spaces[0]
+    space = <object><void *>_space.data
     arbiter = Arbiter(space)
     arbiter._arbiter = _arb
     a = arbiter.shapes[0].collision_type
@@ -51,8 +46,7 @@ cdef bool _call_collision_pre_solve_func(cpArbiter *_arb, cpSpace *_space, void 
 
 cdef bool _call_collision_post_solve_func(cpArbiter *_arb, cpSpace *_space, void *_data):
     global handlers
-    global current_spaces
-    space = current_spaces[0]
+    space = <object><void *>_space.data
     arbiter = Arbiter(space)
     arbiter._arbiter = _arb
     a = arbiter.shapes[0].collision_type
@@ -66,8 +60,7 @@ cdef bool _call_collision_post_solve_func(cpArbiter *_arb, cpSpace *_space, void
 
 cdef bool _call_collision_separate_func(cpArbiter *_arb, cpSpace *_space, void *_data):
     global handlers
-    global current_spaces
-    space = current_spaces[0]
+    space = <object><void *>_space.data
     arbiter = Arbiter(space)
     arbiter._arbiter = _arb
     a = arbiter.shapes[0].collision_type
@@ -172,8 +165,6 @@ cdef class Space:
         affect other parts, most importantly you wont get reliable total_impulse
         readings from the Arbiter object in collsion callbacks!
         '''
-        global current_spaces
-        current_spaces.append(self)
         self._space = cpSpaceNew()
         self._space.iterations = iterations
         self._static_body = Body()
@@ -186,6 +177,7 @@ cdef class Space:
         self._bodies = []
         self._constraints = []
         self.set_default_collision_handler()
+        self._space.data = <cpDataPointer><void *>self
         #self._bodies = set()
         #self._constraints = set()
 
@@ -463,11 +455,11 @@ cdef class Space:
 
     def space_segment_query(self, start_vect, end_vect, layers=1, group=0):
         cpSpaceSegmentQuery(self._space, cpv(start_vect[0], start_vect[1]), cpv(end_vect[0], end_vect[1]), layers, group,
-            _call_space_segment_query_func, NULL)
+            _call_space_segment_query_func, <void *>self)
 
     def space_bb_query(self, bb, layers=1, group=0):
         cpSpaceBBQuery(self._space, bb._bb, layers, group, 
-            _call_space_bb_query_func, NULL)
+            _call_space_bb_query_func, <void *>self)
         
     def point_query_first(self, Vec2d point, layers=1, group=0):
         cdef cpShape* _shape
