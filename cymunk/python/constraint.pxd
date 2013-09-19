@@ -33,16 +33,53 @@ cdef extern from "chipmunk/chipmunk.h":
         cpFloat min
         cpFloat max
 
-    cpConstraint* cpPivotJointNew(cpBody *a, cpBody *b, cpVect pivot)
-    cpConstraint* cpPivotJointNew2(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2)
-    cpConstraint* cpSlideJointNew(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2, cpFloat min, cpFloat max)
+    ctypedef struct cpDampedSpring:
+        cpConstraint constraint
+        cpVect anchr1
+        cpVect anchr2
+        cpFloat restLength
+        cpFloat stiffness
+        cpFloat damping
 
+    ctypedef struct cpPinJoint:
+        cpConstraint constraint
+        cpVect anchr1
+        cpVect anchr2
+        cpFloat dist
+
+    ctypedef struct cpGrooveJoint:
+        cpConstraint constraint
+        cpVect grv_a
+        cpVect grv_b
+        cpVect anchr2
+
+    cpConstraint* cpPinJointNew(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2)
+    cpConstraint* cpPivotJointNew(cpBody *a, cpBody *b, cpVect pivot)
+    cpConstraint* cpPivotJointNew2(cpBody *a, cpBody *b, cpVect anchr1, 
+        cpVect anchr2)
+    cpConstraint* cpSlideJointNew(cpBody *a, cpBody *b, cpVect anchr1, 
+        cpVect anchr2, cpFloat min, cpFloat max)
+    cpConstraint* cpDampedSpringNew(cpBody *a, cpBody *b, cpVect anchr1, 
+        cpVect anchr2, cpFloat restLength, cpFloat stiffness, cpFloat damping)
+    cpConstraint* cpGrooveJointNew(cpBody *a, cpBody *b, cpVect groove_a, 
+        cpVect groove_b, cpVect anchr2)
 
 cdef class Constraint:
     cdef cpConstraint *_constraint
     cdef object _a
     cdef object _b
     cdef int automanaged
+
+cdef class GrooveJoint(Constraint):
+    cdef cpGrooveJoint *_groovejoint
+    cdef tuple groove_b
+    cdef tuple groove_a
+    cdef tuple anchor2
+
+cdef class PinJoint(Constraint):
+    cdef cpPinJoint *_pinjoint
+    cdef tuple anchor1
+    cdef tuple anchor2
 
 cdef class PivotJoint(Constraint):
     cdef cpPivotJoint *_pivotjoint
@@ -55,3 +92,11 @@ cdef class SlideJoint(Constraint):
     cdef tuple anchor2
     cdef float min
     cdef float max
+
+cdef class DampedSpring(Constraint):
+    cdef cpDampedSpring *_dampedspring
+    cdef tuple anchor1
+    cdef tuple anchor2
+    cdef float rest_length
+    cdef float stiffness
+    cdef float damping

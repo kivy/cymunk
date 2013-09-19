@@ -19,10 +19,6 @@ http://www.youtube.com/watch?v=ZgJJZTS0aMM
 
 constraint_handlers = {}
 
-import ctypes as ct
-
-from cpython.ref cimport PyObject
-
 cdef void _call_constraint_presolve_func(cpConstraint *constraint, cpSpace *space):
     global constraint_handlers
     py_space = <object><void *>space.data
@@ -112,7 +108,6 @@ cdef class Constraint:
             self._set_py_postsolve_handler(func)
             self._constraint.postSolve = _call_constraint_postsolve_func
 
-        
     def activate_bodies(self):
         """Activate the bodies this constraint is attached to"""
         self._a.activate()
@@ -126,10 +121,105 @@ cdef class Constraint:
         global constraint_handlers
         constraint_handlers[self]['pre_solve'] = presolve_func
 
-
     def _set_py_postsolve_handler(self, postsolve_func):
         global constraint_handlers
         constraint_handlers[self]['post_solve'] = postsolve_func
+
+cdef class GrooveJoint(Constraint):
+    def __init__(self, Body a, Body b, tuple groove_a, tuple groove_b, tuple anchor2):
+        self._constraint = cpGrooveJointNew(a._body, b._body, cpv(groove_a[0], 
+            groove_a[1]), cpv(groove_b[0], groove_b[1]), cpv(anchor2[0], anchor2[1]))
+        self._set_bodies(a,b)
+        self._constraint.data = <cpDataPointer><void *>self
+        self._groovejoint = <cpGrooveJoint *>self._constraint
+        global constraint_handlers
+        constraint_handlers[self] = {}
+
+    property groove_a:
+        def __get__(self):
+            return self._groovejoint.grv_a
+        def __set__(self, tuple new_groove_a):
+            self._groovejoint.grv_a = cpv(new_groove_a[0], new_groove_a[1])
+
+    property groove_b:
+        def __get__(self):
+            return self._groovejoint.grv_b
+        def __set__(self, tuple new_groove_b):
+            self._groovejoint.grv_b = cpv(new_groove_b[0], new_groove_b[1])
+
+    property anchor2:
+        def __get__(self):
+            return self._groovejoint.anchr2
+        def __set__(self, tuple new_anchor):
+            self._groovejoint.anchr2 = cpv(new_anchor[0], new_anchor[1])
+
+cdef class PinJoint(Constraint):
+
+    def __init__(self, Body a, Body b, tuple anchor1, tuple anchor2):
+        self._constraint = cpPinJointNew(a._body, b._body, cpv(anchor1[0], 
+            anchor1[1]), cpv(anchor2[0], anchor2[1]))
+        self._set_bodies(a,b)
+        self._constraint.data = <cpDataPointer><void *>self
+        self._pinjoint = <cpPinJoint *>self._constraint
+        global constraint_handlers
+        constraint_handlers[self] = {}
+
+    property anchor1:
+        def __get__(self):
+            return self._pinjoint.anchr1
+        def __set__(self, tuple new_anchor):
+            self._pinjoint.anchr1 = cpv(new_anchor[0], new_anchor[1])
+
+    property anchor2:
+        def __get__(self):
+            return self._pinjoint.anchr2
+        def __set__(self, tuple new_anchor):
+            self._pinjoint.anchr2 = cpv(new_anchor[0], new_anchor[1])
+
+
+cdef class DampedSpring(Constraint):
+
+    def __init__(self, Body a, Body b, tuple anchor1, 
+        tuple anchor2, float rest_length, float stiffness, float damping):
+        self._constraint = cpDampedSpringNew(a._body, b._body, cpv(anchor1[0], 
+            anchor1[1]), cpv(anchor2[0], anchor2[1]), rest_length, stiffness,
+            damping)
+        self._set_bodies(a,b)
+        self._constraint.data = <cpDataPointer><void *>self
+        self._dampedspring = <cpDampedSpring *>self._constraint
+        global constraint_handlers
+        constraint_handlers[self] = {}
+
+    property anchor1:
+        def __get__(self):
+            return self._dampedspring.anchr1
+        def __set__(self, tuple new_anchor):
+            self._dampedspring.anchr1 = cpv(new_anchor[0], new_anchor[1])
+
+    property anchor2:
+        def __get__(self):
+            return self._dampedspring.anchr2
+        def __set__(self, tuple new_anchor):
+            self._dampedspring.anchr2 = cpv(new_anchor[0], new_anchor[1])
+
+    property rest_length:
+        def __get__(self):
+            return self._dampedspring.restLength
+        def __set__(self, float new_rest_length):
+            self._dampedspring.restLength = new_rest_length
+
+    property stiffness:
+        def __get__(self):
+            return self._dampedspring.stiffness
+        def __set__(self, float new_stiffness):
+            self._dampedspring.stiffness = new_stiffness
+
+    property damping:
+        def __get__(self):
+            return self._dampedspring.damping
+        def __set__(self, float new_damping):
+            self._dampedspring.damping = new_damping
+
 
 cdef class SlideJoint(Constraint):
 
@@ -146,18 +236,26 @@ cdef class SlideJoint(Constraint):
     property anchor1:
         def __get__(self):
             return self._slidejoint.anchr1
+        def __set__(self, tuple new_anchor):
+            self._slidejoint.anchr1 = cpv(new_anchor[0], new_anchor[1])
 
     property anchor2:
         def __get__(self):
             return self._slidejoint.anchr2
+        def __set__(self, tuple new_anchor):
+            self._slidejoint.anchr2 = cpv(new_anchor[0], new_anchor[1])
 
     property min:
         def __get__(self):
             return self._slidejoint.min
+        def __set__(self, float new_min):
+            self._slidejoint.min = new_min
 
     property max:
         def __get__(self):
             return self._slidejoint.max
+        def __set__(self, float new_max):
+            self._slidejoint.max = new_max
 
 cdef class PivotJoint(Constraint):
     
@@ -218,7 +316,11 @@ cdef class PivotJoint(Constraint):
     property anchor1:
         def __get__(self):
             return self._pivotjoint.anchr1
+        def __set__(self, tuple new_anchor):
+            self._pivotjoint.anchr1 = cpv(new_anchor[0], new_anchor[1])
 
     property anchor2:
         def __get__(self):
             return self._pivotjoint.anchr2
+        def __set__(self, tuple new_anchor):
+            self._pivotjoint.anchr2 = cpv(new_anchor[0], new_anchor[1])
