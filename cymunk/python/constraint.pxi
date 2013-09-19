@@ -19,6 +19,8 @@ http://www.youtube.com/watch?v=ZgJJZTS0aMM
 
 constraint_handlers = {}
 
+import ctypes as ct
+
 from cpython.ref cimport PyObject
 
 cdef void _call_constraint_presolve_func(cpConstraint *constraint, cpSpace *space):
@@ -129,6 +131,33 @@ cdef class Constraint:
         global constraint_handlers
         constraint_handlers[self]['post_solve'] = postsolve_func
 
+cdef class SlideJoint(Constraint):
+
+    def __init__(self, Body a, Body b, tuple anchor1, 
+        tuple anchor2, float _min, float _max):
+        self._constraint = cpSlideJointNew(a._body, b._body, cpv(anchor1[0], 
+            anchor1[1]), cpv(anchor2[0], anchor2[1]), _min, _max)
+        self._set_bodies(a,b)
+        self._constraint.data = <cpDataPointer><void *>self
+        self._slidejoint = <cpSlideJoint *>self._constraint
+        global constraint_handlers
+        constraint_handlers[self] = {}
+
+    property anchor1:
+        def __get__(self):
+            return self._slidejoint.anchr1
+
+    property anchor2:
+        def __get__(self):
+            return self._slidejoint.anchr2
+
+    property min:
+        def __get__(self):
+            return self._slidejoint.min
+
+    property max:
+        def __get__(self):
+            return self._slidejoint.max
 
 cdef class PivotJoint(Constraint):
     
@@ -180,20 +209,16 @@ cdef class PivotJoint(Constraint):
         else:
             raise Exception("You must specify either one pivot point or two anchor points")
             
-        #self._pjc = cp.cast(self._constraint, ct.POINTER(cp.cpPivotJoint)).contents
         self._set_bodies(a,b)
         self._constraint.data = <cpDataPointer><void *>self
+        self._pivotjoint = <cpPivotJoint *>self._constraint
         global constraint_handlers
         constraint_handlers[self] = {}
     
-#    def _get_anchr1(self):
-#        return self._pjc.anchr1
-#    def _set_anchr1(self, anchr):
-#        self._pjc.anchr1 = anchr
-#    anchr1 = property(_get_anchr1, _set_anchr1)
-#    
-#    def _get_anchr2(self):
-#        return self._pjc.anchr2
-#    def _set_anchr2(self, anchr):
-#        self._pjc.anchr2 = anchr
-#    anchr2 = property(_get_anchr2, _set_anchr2)
+    property anchor1:
+        def __get__(self):
+            return self._pivotjoint.anchr1
+
+    property anchor2:
+        def __get__(self):
+            return self._pivotjoint.anchr2

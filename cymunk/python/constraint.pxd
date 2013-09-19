@@ -21,8 +21,21 @@ cdef extern from "chipmunk/chipmunk.h":
         cpConstraintPostSolveFunc postSolve
         cpDataPointer     data
 
+    ctypedef struct cpPivotJoint:
+        cpConstraint constraint
+        cpVect anchr1
+        cpVect anchr2
+
+    ctypedef struct cpSlideJoint:
+        cpConstraint constraint
+        cpVect anchr1
+        cpVect anchr2
+        cpFloat min
+        cpFloat max
+
     cpConstraint* cpPivotJointNew(cpBody *a, cpBody *b, cpVect pivot)
     cpConstraint* cpPivotJointNew2(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2)
+    cpConstraint* cpSlideJointNew(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2, cpFloat min, cpFloat max)
 
 
 cdef class Constraint:
@@ -30,3 +43,15 @@ cdef class Constraint:
     cdef object _a
     cdef object _b
     cdef int automanaged
+
+cdef class PivotJoint(Constraint):
+    cdef cpPivotJoint *_pivotjoint
+    cdef tuple anchor1
+    cdef tuple anchor2
+
+cdef class SlideJoint(Constraint):
+    cdef cpSlideJoint *_slidejoint
+    cdef tuple anchor1
+    cdef tuple anchor2
+    cdef float min
+    cdef float max
