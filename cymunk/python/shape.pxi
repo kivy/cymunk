@@ -1,3 +1,63 @@
+from libc.stdlib cimport malloc, free
+
+def is_clockwise(points): 
+    """
+    # from pymunk sourcecode
+    Check if the points given forms a clockwise polygon
+    
+    :return: True if the points forms a clockwise polygon
+    """
+    cdef int a = 0, i = 0, j = 0
+    cdef int l_points = len(points)
+    for i in range(l_points):
+        j = i + 1
+        if j == l_points:
+            j = 0
+        a += points[i][0] * points[j][1] - points[i][1] * points[j][0]
+    return a <= 0 #or is it the other way around?
+
+def calc_area(points):
+    """Calculate the area of a polygon
+    
+    :return: Area of polygon
+    """
+    
+    #ref: http://en.wikipedia.org/wiki/Polygon
+    
+    if len(points) < 3: return 0
+
+    p1 = points[0]
+    a = 0
+    for p2 in points[1:] + [points[0]]:       
+        a += p1[0] * p2[1] - p2[0] * p1[1]
+        p1 = p2
+    a = 0.5 * a
+    
+    return a
+def calc_center(points):
+    """
+    # from pymunk sourcecode
+    Calculate the center of a polygon
+    
+    :return: The center (x,y)
+    """
+    
+    #ref: http://en.wikipedia.org/wiki/Polygon
+    
+    assert len(points) > 0, "need at least 1 points to calculate the center"
+    
+    area = calc_area(points)
+    
+    p1 = points[0]
+    cx = cy = 0
+    for p2 in points[1:] + [points[0]]:       
+        tmp = (p1[0] * p2[1] - p2[0] * p1[1])
+        cx += (p1[0] + p2[0]) * tmp
+        cy += (p1[1] + p2[1]) * tmp
+        p1 = p2
+    c = 1 / (6. * area) * cx, 1 / (6. * area) * cy
+    return c
+
 cdef class Shape:
     '''
     Base class for all the shapes.
@@ -192,24 +252,37 @@ cdef class Segment(Shape):
             pass
 
 cdef class Poly(Shape):
+    cdef cpVect _offset
+    cdef cpVect *_vertices
 
-    def __cinit__(self, Body body, vertices, offset=(0, 0), auto_order_vertices=True):
+    def __init__(self, Body body, vertices, offset=(0, 0), auto_order_vertices=True):
         Shape.__init__(self)
+        self._vertices = NULL
         self._body = body
-        self.offset = offset
+        self._offset = cpv(offset[0], offset[1])
+
+        if not len(vertices):
+            raise Exception('No vertices passed')
+
         #self.verts = (Vec2d * len(vertices))
         #self.verts = self.verts(Vec2d(0, 0))
 
         i_vs = enumerate(vertices)
-        #if auto_order_vertices and not u.is_clockwise(vertices):
-        #    i_vs = zip(range(len(vertices)-1, -1, -1), vertices)
+        #original: if auto_order_vertices and not u.is_clockwise(vertices):
+        if not is_clockwise(vertices):
+            i_vs = zip(range(len(vertices)-1, -1, -1), vertices)
 
+
+        self._vertices = <cpVect *>malloc(sizeof(cpVect) * len(vertices))
         for i, vertex in i_vs:
-            self.verts[i].x = vertex[0]
-            self.verts[i].y = vertex[1]
+            self._vertices[i] = cpv(vertex[0], vertex[1])
 
-        #self._shape = cpPolyShapeNew(body._body, len(vertices), self.verts, offset)
+        self._shape = cpPolyShapeNew(body._body, len(vertices), self._vertices,
+                self._offset)
 
+    def __dealloc__(self):
+        if self._vertices != NULL:
+            free(self._vertices)
 
     #@staticmethod
     #def create_box(body, size=(10,10)):
