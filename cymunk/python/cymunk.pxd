@@ -1,4 +1,5 @@
 ctypedef int bool
+ctypedef int datapointer
 
 cdef extern from "chipmunk/chipmunk.h":
     cdef void cpInitChipmunk()
@@ -8,7 +9,7 @@ cdef extern from "chipmunk/chipmunk.h":
     cpFloat INFINITY
     ctypedef struct cpVect:
         cpFloat x,y
-    ctypedef void* cpDataPointer
+    ctypedef datapointer cpDataPointer
     ctypedef bool cpBool
     ctypedef int cpGroup
     ctypedef int cpLayers
@@ -105,8 +106,7 @@ cdef extern from "chipmunk/chipmunk.h":
     cpFloat cpMomentForBox(cpFloat m, cpFloat width, cpFloat height)
     void cpResetShapeIdCounter()
 
-    #cpBB cpBB()
-    #cpBB cpBBNew(cpFloat l, cpFloat b, cpFloat r, cpFloat t)
+    cpBB cpBBNew(cpFloat l, cpFloat b, cpFloat r, cpFloat t)
     cpBool cpBBIntersects(cpBB a, cpBB b)
     cpBool cpBBContainsBB(cpBB bb, cpBB other)
     cpBool cpBBContainsVect(cpBB bb, cpVect v)
@@ -124,6 +124,7 @@ cdef extern from "chipmunk/chipmunk.h":
     cpVect cpArbiterGetNormal(cpArbiter *arb, int i)
     cpVect cpArbiterGetPoint(cpArbiter *arb, int i)
     cpFloat cpArbiterGetDepth(cpArbiter *arb, int i)
+    cpFloat cpArbiterTotalKE(const cpArbiter *arb)
 
 
 
@@ -131,3 +132,4 @@ include "core.pxd"
 include "body.pxd"
 include "shape.pxd"
 include "space.pxd"
+include "constraint.pxd"

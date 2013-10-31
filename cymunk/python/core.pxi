@@ -1,6 +1,10 @@
 
+import math
+
 #: Version of Cymunk
 __version__ = '0.1'
+
+X, Y = 0, 1
 
 # init the library, whatever we will do.
 cpInitChipmunk()
@@ -9,7 +13,7 @@ def moment_for_circle(mass, inner_radius, outer_radius, offset=(0, 0)):
     '''
     Calculate the moment of inertia for a circle
     '''
-    return cpMomentForCircle(mass, inner_radius, outer_radius, cpv(offset.x, offset.y))
+    return cpMomentForCircle(mass, inner_radius, outer_radius, cpv(offset[0], offset[1]))
 
 
 def moment_for_segment(mass, a, b):
@@ -48,6 +52,21 @@ def reset_shapeid_counter():
     cpResetShapeIdCounter()
 
 
+def is_clockwise(points): 
+    """
+    Check if the points given forms a clockwise polygon
+    
+    :return: True if the points forms a clockwise polygon
+    """
+    a = 0
+    i, j = 0, 0
+    for i in range(len(points)):
+        j = i + 1
+        if j == len(points): j = 0
+        a += points[i][X]*points[j][Y] - points[i][Y]*points[j][X]
+    return a <= 0 #or is it the other way around?
+
+
 cdef class Vec2d:
     cdef cpVect v
 
@@ -59,6 +78,10 @@ cdef class Vec2d:
             return self.v.x
         def __set__(self, value):
             self.v.x = value
+
+    property v:
+        def __get__(self):
+            return self.v
 
     property y:
         def __get__(self):
@@ -83,6 +106,18 @@ cdef class Vec2d:
 
     def __repr__(self):
         return '<cymunk.Vec2d x=%f y=%f>' % (self.v.x, self.v.y)
+    
+    def rotate(self, angle_radians):
+        """Rotate the vector by angle_radians radians."""
+        cdef float x
+        cdef float y
+        
+        cos = math.cos(angle_radians)
+        sin = math.sin(angle_radians)
+        x = self.v.x*cos - self.v.y*sin
+        y = self.v.x*sin + self.v.y*cos
+        self.v.x = x
+        self.v.y = y
 
 cdef class Contact:
     '''
@@ -123,22 +158,22 @@ cdef class Contact:
             return self._dist
 
 
-#cdef class BB:
-    #cdef cpBB* _bb
-    #def __cinit__(self, *args):
-    #    if len(args) == 0:
-    #        self._bb = cpBB()
-    #    elif len(args) == 1:
-    #        self._bb = args[0]
-        #else:
-        #    self._bb = cpBBNew(args[0], args[1], args[2], args[3])
+cdef class BB:
+    cdef cpBB _bb
+    cdef float l
+    cdef float b
+    cdef float r
+    cdef float t
 
-    #def __repr__(self):
-    #    return 'BB(%s, %s, %s, %s)' % (self.left, self.bottom, self.right, self.top)
+    def __cinit__(self, float l, float b, float r, float t):
+        self._bb = cpBBNew(l, b, r, t)
 
-    #def __eq__(self, other):
-    #    return self.left == other.left and self.bottom == other.bottom and \
-    #        self.right == other.right and self.top == other.top
+    def __repr__(self):
+        return 'BB(%s, %s, %s, %s)' % (self._bb.l, self._bb.b, self._bb.r, self._bb.t)
+
+    # def __eq__(self, other):
+    #     return self.l == other.l and self.b == other.b and \
+    #         self.r == other.r and self.t == other.l
 
     #def __ne__(self, other):
     #    return not self.__eq__(other)
@@ -158,10 +193,25 @@ cdef class Contact:
     #def expand(self, v):
     #    return BB(cpBBExpand(self._bb, cpv(v.x, v.y)))
 
-    #left = property(lambda self: self._bb.l)
-    #bottom = property(lambda self: self._bb.b)
-    #right = property(lambda self: self._bb.r)
-    #top = property(lambda self: self._bb.t)
+    property _bb:
+        def __get__(self):
+            return self._bb
+
+    property l:
+        def __get__(self):
+            return self._bb.l
+
+    property b:
+        def __get__(self):
+            return self._bb.b
+
+    property r:
+        def __get__(self):
+            return self._bb.r
+
+    property t:
+        def __get__(self):
+            return self._bb.t
 
     #def clamp_vect(self, v):
     #    return cpBBClampVect(self._bb, cpv(v.x, v.y))
@@ -225,6 +275,7 @@ cdef class Arbiter:
             b = self._space._get_shape(shapeB_p)
             return a, b
 
+ 
     property elasticity:
         '''
         Elasticity
@@ -279,4 +330,13 @@ cdef class Arbiter:
         '''
         def __get__(self):
             return cpArbiterIsFirstContact(self._arbiter)
+    
+    property total_ke:
+        """The amount of energy lost in a collision including static, but 
+        not dynamic friction.
+        
+        This property should only be called from a post-solve, post-step"""
+        
+        def __get__(self):
+            return cpArbiterTotalKE(self._arbiter)
 

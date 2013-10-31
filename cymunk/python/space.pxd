@@ -29,6 +29,7 @@ cdef extern from "chipmunk/chipmunk.h":
     cdef cpSpace* cpSpaceInit(cpSpace *space)
     cdef cpSpace* cpSpaceNew()
 
+
     cdef void cpSpaceDestroy(cpSpace *space)
     cdef void cpSpaceFree(cpSpace *space)
 
@@ -62,6 +63,22 @@ cdef extern from "chipmunk/chipmunk.h":
     void cpSpaceRemoveStaticShape(cpSpace *space, cpShape *shape)
     void cpSpaceRemoveBody(cpSpace *space, cpBody *body)
     void cpSpaceRemoveConstraint(cpSpace *space, cpConstraint *constraint)
+
+    ctypedef void(* cpSpaceBBQueryFunc)(cpShape *shape, void *data)
+    void cpSpaceBBQuery(cpSpace *space, cpBB bb, cpLayers layers, 
+        cpGroup group, cpSpaceBBQueryFunc func, void *data)
+    
+    ctypedef void(* cpSpaceSegmentQueryFunc)(cpShape *shape, 
+        cpFloat t, cpVect n, void *data)
+        
+    cpShape* cpSpacePointQueryFirst(cpSpace *space, cpVect point, cpLayers layers, cpGroup group)
+    
+    void cpSpaceSegmentQuery(cpSpace *space, cpVect start, 
+        cpVect end, cpLayers layers, cpGroup group, 
+        cpSpaceSegmentQueryFunc, void *data)
+    
+    ctypedef void (*cpSpaceShapeQueryFunc)(cpShape *shape, cpContactPointSet *points, void *data)
+    cpBool cpSpaceShapeQuery(cpSpace *space, cpShape *shape, cpSpaceShapeQueryFunc func, void *data)
 
     void cpSpaceReindexStatic(cpSpace *space)
     void cpSpaceReindexShape(cpSpace *space, cpShape *shape)

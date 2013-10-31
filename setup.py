@@ -26,11 +26,12 @@ c_chipmunk_files = [join(c_chipmunk_src, x) for x in (
 
 if have_cython:
     cymunk_files = [
-        'cymunk/python/cymunk.pyx',
+        'cymunk/python/constraint.pxi',
         'cymunk/python/core.pxi',
         'cymunk/python/space.pxi',
         'cymunk/python/shape.pxi',
         'cymunk/python/body.pxi',
+        'cymunk/python/cymunk.pyx'
         ]
     cmdclass = {'build_ext': build_ext}
 else:
@@ -41,6 +42,7 @@ ext = Extension('cymunk',
     cymunk_files + c_chipmunk_files,
     include_dirs=c_chipmunk_incs,
     extra_compile_args=['-std=c99', '-ffast-math', '-fPIC', '-DCHIPMUNK_FFI'])
+ 
 
 if environ.get('READTHEDOCS', None) == 'True':
     ext.pyrex_directives = {'embedsignature': True}

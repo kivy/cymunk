@@ -20,8 +20,14 @@ cdef extern from "chipmunk/chipmunk.h":
     void cpCircleShapeSetRadius(cpShape *shape, cpFloat radius)
     void cpCircleShapeSetOffset(cpShape *shape, cpVect offset)
 
+    cpShape* cpBoxShapeNew(cpBody *body, cpFloat width, cpFloat heigth)
+
     cpShape* cpSegmentShapeNew(cpBody *body, cpVect a, cpVect b, cpFloat radius)
 
 
     cpShape* cpPolyShapeNew(cpBody *body, int numVerts, cpVect *verts, cpVect offset)
+    
+    cpBool cpPolyValidate(cpVect *verts, int numVerts)
+    
+    cpVect cpPolyShapeGetVert(cpShape* shape, int idx)
 

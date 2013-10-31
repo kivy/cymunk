@@ -8,6 +8,8 @@ cdef class Body:
     '''
 
     def __cinit__(self, mass=None, moment=None):
+        self._data = None
+        self._constraints = []
         if mass is None and moment is None:
             self._body = cpBodyNewStatic()
         else:
@@ -34,7 +36,7 @@ cdef class Body:
         Moment of the body
         '''
         def __get__(self):
-            return self._bodycontents.i
+            return self._body.i
         def __set__(self, moment):
             cpBodySetMoment(self._body, moment)
 
@@ -49,10 +51,10 @@ cdef class Body:
 
     property rotation_vector:
         '''
-        The rotation vector of the body
+        The rotation vector of the body as a unit vector
         '''
         def __get__(self):
-            return self._bodycontents.rot
+            return Vec2d(self._body.rot.x, self._body.rot.y)
 
     property torque:
         def __get__(self):
@@ -95,6 +97,12 @@ cdef class Body:
             return self._body.f
         def __set__(self, f):
             self._body.f = cpv(f.x, f.y)
+
+    property data:
+        def __get__(self):
+            return self._data
+        def __set__(self, data):
+            self._data = data
 
     property is_sleeping:
         '''
