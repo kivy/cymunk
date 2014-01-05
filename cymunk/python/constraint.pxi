@@ -33,6 +33,7 @@ cdef void _call_constraint_postsolve_func(cpConstraint *constraint, cpSpace *spa
     constraint_dict = constraint_handlers[py_constraint]
     constraint_dict['post_solve'](py_constraint, py_space)
 
+
 cdef class Constraint:
     """Base class of all constraints. 
     
@@ -125,6 +126,7 @@ cdef class Constraint:
         global constraint_handlers
         constraint_handlers[self]['post_solve'] = postsolve_func
 
+
 cdef class GrooveJoint(Constraint):
     def __init__(self, Body a, Body b, tuple groove_a, tuple groove_b, tuple anchor2):
         self._constraint = cpGrooveJointNew(a._body, b._body, cpv(groove_a[0], 
@@ -152,6 +154,7 @@ cdef class GrooveJoint(Constraint):
             return self._groovejoint.anchr2
         def __set__(self, tuple new_anchor):
             self._groovejoint.anchr2 = cpv(new_anchor[0], new_anchor[1])
+
 
 cdef class PinJoint(Constraint):
 
@@ -256,6 +259,7 @@ cdef class SlideJoint(Constraint):
             return self._slidejoint.max
         def __set__(self, float new_max):
             self._slidejoint.max = new_max
+
 
 cdef class PivotJoint(Constraint):
     
