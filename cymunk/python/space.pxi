@@ -9,11 +9,24 @@ cdef void _call_space_bb_query_func(cpShape *shape, void *data):
     py_shape = space.shapes[shape.hashid_private]
     handlers['bb_query_func'](py_shape)
 
+
+cdef void _call_bb_query_func(cpShape *shape, void *data):
+    space = <object>data
+    py_shape = space.shapes[shape.hashid_private]
+    space._add_query_hits(py_shape)
+
+
 cdef void _call_space_segment_query_func(cpShape *shape, cpFloat t, cpVect n, void *data):
     global handlers
     space = <object>data
     py_shape = space.shapes[shape.hashid_private]
     handlers['segment_query_func'](py_shape, t, n)
+
+
+cdef void _call_shape_query_func(cpShape *shape, cpContactPointSet *points, void *data):
+    space = <object>data
+    py_shape = space.shapes[shape.hashid_private]
+    space._add_query_hits(py_shape)
 
 
 cdef bool _call_collision_begin_func(cpArbiter *_arb, cpSpace *_space, void *_data):
@@ -29,6 +42,7 @@ cdef bool _call_collision_begin_func(cpArbiter *_arb, cpSpace *_space, void *_da
         else:
             return False
     return True
+
 
 cdef bool _call_collision_pre_solve_func(cpArbiter *_arb, cpSpace *_space, void *_data):
     global handlers
@@ -154,6 +168,7 @@ cdef class Space:
     cdef dict _post_step_callbacks
     cdef dict _handlers
     cdef tuple _default_handlers
+    cdef list _query_hits
 
     def __init__(self, int iterations=10):
         '''
@@ -178,6 +193,7 @@ cdef class Space:
         self._constraints = []
         self.set_default_collision_handler()
         self._space.data = <cpDataPointer><void *>self
+        self._query_hits = []
         #self._bodies = set()
         #self._constraints = set()
 
@@ -460,6 +476,20 @@ cdef class Space:
     def space_bb_query(self, bb, layers=1, group=0):
         cpSpaceBBQuery(self._space, bb._bb, layers, group, 
             _call_space_bb_query_func, <void *>self)
+    
+    def bb_query(self, bb, layers=1, group=0):
+        self._query_hits = []
+        cpSpaceBBQuery(self._space, bb._bb, layers, group, 
+            _call_bb_query_func, <void *>self)
+        return self._query_hits
+    
+    def shape_query(self, Shape shape):
+        self._query_hits = []
+        cpSpaceShapeQuery(self._space, shape._shape, _call_shape_query_func, <void *>self)
+        return self._query_hits
+    
+    def _add_query_hits(self, value):
+        self._query_hits.append(value)
         
     def point_query_first(self, Vec2d point, layers=1, group=0):
         cdef cpShape* _shape
