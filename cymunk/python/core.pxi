@@ -159,11 +159,6 @@ cdef class Contact:
 
 
 cdef class BB:
-    cdef cpBB _bb
-    cdef float l
-    cdef float b
-    cdef float r
-    cdef float t
 
     def __cinit__(self, float l, float b, float r, float t):
         self._bb = cpBBNew(l, b, r, t)

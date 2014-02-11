@@ -1,3 +1,18 @@
+cdef class Space:
+    cdef cpSpace* _space
+    cdef Body _static_body
+    cdef dict _shapes
+    cdef dict _static_shapes
+    cdef list _bodies
+    cdef list _constraints
+    cdef dict _post_step_callbacks
+    cdef dict _handlers
+    cdef tuple _default_handlers
+    cdef list _query_hits
+
+    cdef object _get_shape(self, cpShape *_shape)
+    cdef void _add_c_collision_handler(self, a, b)
+
 cdef extern from "chipmunk/chipmunk.h":
     ctypedef unsigned int cpTimestamp
 

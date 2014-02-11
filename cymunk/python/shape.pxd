@@ -1,3 +1,15 @@
+cdef class Shape:
+    cdef cpShape* _shape
+    cdef int automanaged
+    cdef Body _body
+
+cdef class Circle(Shape):
+    cdef float radius
+
+cdef class BoxShape(Shape):
+    cdef float width
+    cdef float height
+
 cdef extern from "chipmunk/chipmunk.h":
     ctypedef struct cpSegmentShape:
         cpShape shape

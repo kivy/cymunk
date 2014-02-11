@@ -54,7 +54,8 @@ cdef class Body:
         The rotation vector of the body as a unit vector
         '''
         def __get__(self):
-            return Vec2d(self._body.rot.x, self._body.rot.y)
+            rot = self._body.rot
+            return Vec2d(rot.x, rot.y)
 
     property torque:
         def __get__(self):
@@ -64,13 +65,15 @@ cdef class Body:
 
     property position:
         def __get__(self):
-            return Vec2d(self._body.p.x, self._body.p.y)
+            p = self._body.p
+            return Vec2d(p.x, p.y)
         def __set__(self, pos):
             self._body.p = cpv(pos[0], pos[1])
 
     property velocity:
         def __get__(self):
-            return Vec2d(self._body.v.x, self._body.v.y)
+            v = self._body.v
+            return Vec2d(v.x, v.y)
         def __set__(self, vel):
             self._body.v = cpv(vel[0], vel[1])
 

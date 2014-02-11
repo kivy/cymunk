@@ -5,37 +5,51 @@ handlers = {}
     
 cdef void _call_space_bb_query_func(cpShape *shape, void *data):
     global handlers
-    space = <object>data
-    py_shape = space.shapes[shape.hashid_private]
+    cdef dict shapes
+    cdef Space space
+    space = <Space>data
+    shapes = space._shapes
+    py_shape = shapes[shape.hashid_private]
     handlers['bb_query_func'](py_shape)
 
 
 cdef void _call_bb_query_func(cpShape *shape, void *data):
-    space = <object>data
-    py_shape = space.shapes[shape.hashid_private]
+    cdef Space space
+    space = <Space>data
+    cdef dict shapes
+    shapes = space._shapes
+    py_shape = shapes[shape.hashid_private]
     space._add_query_hits(py_shape)
 
 
 cdef void _call_space_segment_query_func(cpShape *shape, cpFloat t, cpVect n, void *data):
     global handlers
-    space = <object>data
-    py_shape = space.shapes[shape.hashid_private]
+    cdef Space space
+    space = <Space>data
+    cdef dict shapes
+    shapes = space._shapes
+    py_shape = shapes[shape.hashid_private]
     handlers['segment_query_func'](py_shape, t, n)
 
 
 cdef void _call_shape_query_func(cpShape *shape, cpContactPointSet *points, void *data):
-    space = <object>data
-    py_shape = space.shapes[shape.hashid_private]
+    cdef Space space
+    space = <Space>data
+    cdef dict shapes
+    shapes = space._shapes
+    py_shape = shapes[shape.hashid_private]
     space._add_query_hits(py_shape)
 
 
-cdef bool _call_collision_begin_func(cpArbiter *_arb, cpSpace *_space, void *_data):
+cdef bool _call_collision_begin_func(cpArbiter *_arb, cpSpace *_space, void *data):
     global handlers
-    space = <object><void *>_space.data
+    cdef Space space
+    space = <Space>data
     arbiter = Arbiter(space)
     arbiter._arbiter = _arb
-    a = arbiter.shapes[0].collision_type
-    b = arbiter.shapes[1].collision_type
+    shapes = arbiter.shapes
+    a = shapes[0].collision_type
+    b = shapes[1].collision_type
     if handlers[(a, b)]['begin_func'] is not None:
         if handlers[(a, b)]['begin_func'](space, arbiter):
             return True
@@ -44,13 +58,15 @@ cdef bool _call_collision_begin_func(cpArbiter *_arb, cpSpace *_space, void *_da
     return True
 
 
-cdef bool _call_collision_pre_solve_func(cpArbiter *_arb, cpSpace *_space, void *_data):
+cdef bool _call_collision_pre_solve_func(cpArbiter *_arb, cpSpace *_space, void *data):
     global handlers
-    space = <object><void *>_space.data
+    cdef Space space
+    space = <Space>data
     arbiter = Arbiter(space)
     arbiter._arbiter = _arb
-    a = arbiter.shapes[0].collision_type
-    b = arbiter.shapes[1].collision_type
+    shapes = arbiter.shapes
+    a = shapes[0].collision_type
+    b = shapes[1].collision_type
     if handlers[(a, b)]['pre_solve_func'] is not None:
         if handlers[(a, b)]['pre_solve_func'](space, arbiter):
             return True
@@ -58,13 +74,15 @@ cdef bool _call_collision_pre_solve_func(cpArbiter *_arb, cpSpace *_space, void 
             return False
     return True
 
-cdef bool _call_collision_post_solve_func(cpArbiter *_arb, cpSpace *_space, void *_data):
+cdef bool _call_collision_post_solve_func(cpArbiter *_arb, cpSpace *_space, void *data):
     global handlers
-    space = <object><void *>_space.data
+    cdef Space space
+    space = <Space>data
     arbiter = Arbiter(space)
     arbiter._arbiter = _arb
-    a = arbiter.shapes[0].collision_type
-    b = arbiter.shapes[1].collision_type
+    shapes = arbiter.shapes
+    a = shapes[0].collision_type
+    b = shapes[1].collision_type
     if handlers[(a, b)]['post_solve_func'] is not None:
         if handlers[(a, b)]['post_solve_func'](space, arbiter):
             return True
@@ -72,13 +90,15 @@ cdef bool _call_collision_post_solve_func(cpArbiter *_arb, cpSpace *_space, void
             return False
     return False
 
-cdef bool _call_collision_separate_func(cpArbiter *_arb, cpSpace *_space, void *_data):
+cdef bool _call_collision_separate_func(cpArbiter *_arb, cpSpace *_space, void *data):
     global handlers
-    space = <object><void *>_space.data
+    cdef Space space
+    space = <Space>data
     arbiter = Arbiter(space)
     arbiter._arbiter = _arb
-    a = arbiter.shapes[0].collision_type
-    b = arbiter.shapes[1].collision_type
+    shapes = arbiter.shapes
+    a = shapes[0].collision_type
+    b = shapes[1].collision_type
     if handlers[(a, b)]['separate_func'] is not None:
         if handlers[(a, b)]['separate_func'](space, arbiter):
             return True
@@ -159,16 +179,6 @@ cdef class Space:
     Spaces are the basic unit of simulation. You add rigid bodies, shapes and
     joints to it and then step them all forward together through time.
     '''
-    cdef cpSpace* _space
-    cdef Body _static_body
-    cdef dict _shapes
-    cdef dict _static_shapes
-    cdef list _bodies
-    cdef list _constraints
-    cdef dict _post_step_callbacks
-    cdef dict _handlers
-    cdef tuple _default_handlers
-    cdef list _query_hits
 
     def __init__(self, int iterations=10):
         '''
@@ -251,7 +261,8 @@ cdef class Space:
         Default gravity to supply when integrating rigid body motions.
         '''
         def __get__(self):
-            return Vec2d(self._space.gravity.x, self._space.gravity.y)
+            gravity = self._space.gravity
+            return Vec2d(gravity.x, gravity.y)
         def __set__(self, gravity):
             cdef Vec2d vec
             if isinstance(gravity, Vec2d):
@@ -501,7 +512,7 @@ cdef class Space:
                     or self._static_shapes.get(_shape.hashid_private, None)
 
     cdef void _add_c_collision_handler(self, a, b):
-        cpSpaceAddCollisionHandler(self._space, a, b, _call_collision_begin_func, _call_collision_pre_solve_func, _call_collision_post_solve_func, _call_collision_separate_func, NULL)
+        cpSpaceAddCollisionHandler(self._space, a, b, _call_collision_begin_func, _call_collision_pre_solve_func, _call_collision_post_solve_func, _call_collision_separate_func, <void *>self)
 
     def _set_py_collision_handlers(self, a, b, begin, pre_solve, post_solve, separate):
         global handlers

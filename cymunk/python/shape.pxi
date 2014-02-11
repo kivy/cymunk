@@ -67,10 +67,6 @@ cdef class Shape:
     of the specialized shapes instead.
     '''
 
-    cdef cpShape* _shape
-    cdef int automanaged
-    cdef Body _body
-
     def __init__(self):
         self._shape = NULL
         self.automanaged = 1
@@ -181,7 +177,6 @@ cdef class Circle(Shape):
 
     This is the fastest and simplest collision shape
     '''
-    cdef float radius
 
     def __init__(self, Body body, cpFloat radius, offset=(0, 0)):
         Shape.__init__(self)
@@ -266,9 +261,6 @@ cdef class Segment(Shape):
 #        should be used instead 
 
 cdef class BoxShape(Shape):
-
-    cdef float width
-    cdef float height
 
     def __init__(self, Body body, width, height):
         Shape.__init__(self)
