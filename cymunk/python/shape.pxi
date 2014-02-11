@@ -302,6 +302,8 @@ cdef class Poly(Shape):
         self._vertices_count = len(vertices)
         if auto_order_vertices and not is_clockwise(vertices):
             i_vs = zip(range(len(vertices)-1, -1, -1), vertices)
+        else:
+            i_vs = zip(range(len(vertices)), vertices)
 
         self._vertices = <cpVect *>malloc(sizeof(cpVect) * self._vertices_count)
         for i, vertex in i_vs:
