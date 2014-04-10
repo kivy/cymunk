@@ -48,13 +48,16 @@ cdef bool _call_collision_begin_func(cpArbiter *_arb, cpSpace *_space, void *dat
     arbiter = Arbiter(space)
     arbiter._arbiter = _arb
     shapes = arbiter.shapes
-    a = shapes[0].collision_type
-    b = shapes[1].collision_type
-    if handlers[(a, b)]['begin_func'] is not None:
-        if handlers[(a, b)]['begin_func'](space, arbiter):
-            return True
-        else:
-            return False
+    shape1 = shapes[0]
+    shape2 = shapes[1]
+    if shape1 is not None and shape2 is not None:
+        a = shape1.collision_type
+        b = shape2.collision_type
+        if handlers[(a, b)]['begin_func'] is not None:
+            if handlers[(a, b)]['begin_func'](space, arbiter):
+                return True
+            else:
+                return False
     return True
 
 
@@ -65,13 +68,16 @@ cdef bool _call_collision_pre_solve_func(cpArbiter *_arb, cpSpace *_space, void 
     arbiter = Arbiter(space)
     arbiter._arbiter = _arb
     shapes = arbiter.shapes
-    a = shapes[0].collision_type
-    b = shapes[1].collision_type
-    if handlers[(a, b)]['pre_solve_func'] is not None:
-        if handlers[(a, b)]['pre_solve_func'](space, arbiter):
-            return True
-        else:
-            return False
+    shape1 = shapes[0]
+    shape2 = shapes[1]
+    if shape1 is not None and shape2 is not None:
+        a = shape1.collision_type
+        b = shape2.collision_type
+        if handlers[(a, b)]['pre_solve_func'] is not None:
+            if handlers[(a, b)]['pre_solve_func'](space, arbiter):
+                return True
+            else:
+                return False
     return True
 
 cdef bool _call_collision_post_solve_func(cpArbiter *_arb, cpSpace *_space, void *data):
@@ -81,13 +87,16 @@ cdef bool _call_collision_post_solve_func(cpArbiter *_arb, cpSpace *_space, void
     arbiter = Arbiter(space)
     arbiter._arbiter = _arb
     shapes = arbiter.shapes
-    a = shapes[0].collision_type
-    b = shapes[1].collision_type
-    if handlers[(a, b)]['post_solve_func'] is not None:
-        if handlers[(a, b)]['post_solve_func'](space, arbiter):
-            return True
-        else:
-            return False
+    shape1 = shapes[0]
+    shape2 = shapes[1]
+    if shape1 is not None and shape2 is not None:
+        a = shape1.collision_type
+        b = shape2.collision_type
+        if handlers[(a, b)]['post_solve_func'] is not None:
+            if handlers[(a, b)]['post_solve_func'](space, arbiter):
+                return True
+            else:
+                return False
     return False
 
 cdef bool _call_collision_separate_func(cpArbiter *_arb, cpSpace *_space, void *data):
@@ -97,13 +106,16 @@ cdef bool _call_collision_separate_func(cpArbiter *_arb, cpSpace *_space, void *
     arbiter = Arbiter(space)
     arbiter._arbiter = _arb
     shapes = arbiter.shapes
-    a = shapes[0].collision_type
-    b = shapes[1].collision_type
-    if handlers[(a, b)]['separate_func'] is not None:
-        if handlers[(a, b)]['separate_func'](space, arbiter):
-            return True
-        else:
-            return False
+    shape1 = shapes[0]
+    shape2 = shapes[1]
+    if shape1 is not None and shape2 is not None:
+        a = shape1.collision_type
+        b = shape2.collision_type
+        if handlers[(a, b)]['separate_func'] is not None:
+            if handlers[(a, b)]['separate_func'](space, arbiter):
+                return True
+            else:
+                return False
     return False
 
 

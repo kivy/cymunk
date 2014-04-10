@@ -4,3 +4,6 @@ cdef class BB:
     cdef float b
     cdef float r
     cdef float t
+
+cdef class Vec2d:
+    cdef cpVect v
