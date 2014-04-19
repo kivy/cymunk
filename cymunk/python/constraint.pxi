@@ -19,14 +19,16 @@ http://www.youtube.com/watch?v=ZgJJZTS0aMM
 
 constraint_handlers = {}
 
-cdef void _call_constraint_presolve_func(cpConstraint *constraint, cpSpace *space):
+cdef void _call_constraint_presolve_func(cpConstraint *constraint,
+    cpSpace *space):
     global constraint_handlers
     py_space = <object><void *>space.data
     py_constraint = <object><void *>constraint.data
     constraint_dict = constraint_handlers[py_constraint]
     constraint_dict['pre_solve'](py_constraint, py_space)
 
-cdef void _call_constraint_postsolve_func(cpConstraint *constraint, cpSpace *space):
+cdef void _call_constraint_postsolve_func(cpConstraint *constraint, 
+    cpSpace *space):
     global constraint_handlers
     py_space = <object><void *>space.data
     py_constraint = <object><void *>constraint.data
@@ -328,3 +330,26 @@ cdef class PivotJoint(Constraint):
             return self._pivotjoint.anchr2
         def __set__(self, tuple new_anchor):
             self._pivotjoint.anchr2 = cpv(new_anchor[0], new_anchor[1])
+
+
+cdef class GearJoint(Constraint):
+    
+    def __init__(self, Body a, Body b, float phase, float ratio):
+        self._constraint = cpGearJointNew(a._body, b._body, phase, ratio)
+        self._set_bodies(a,b)
+        self._constraint.data = <cpDataPointer><void *>self
+        self._gearjoint = <cpGearJoint *>self._constraint
+        global constraint_handlers
+        constraint_handlers[self] = {}
+
+    property phase:
+        def __get__(self):
+            return self._gearjoint.phase
+        def __set__(self, float value):
+            self._gearjoint.phase = value
+
+    property ratio:
+        def __get__(self):
+            return self._gearjoint.ratio
+        def __set__(self, float value):
+            self._gearjoint.ratio = value

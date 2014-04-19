@@ -12,6 +12,8 @@ cdef class Body:
         self._constraints = []
         if mass is None and moment is None:
             self._body = cpBodyNewStatic()
+        elif mass is 'INF' and moment is 'INF':
+            self._body = cpBodyNew(INFINITY, INFINITY)
         else:
             self._body = cpBodyNew(float(mass), float(moment))
             self.automanaged = 1

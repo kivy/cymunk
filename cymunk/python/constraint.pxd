@@ -53,7 +53,13 @@ cdef extern from "chipmunk/chipmunk.h":
         cpVect grv_b
         cpVect anchr2
 
-    cpConstraint* cpPinJointNew(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2)
+    ctypedef struct cpGearJoint:
+        cpConstraint constraint
+        cpFloat phase
+        cpFloat ratio
+
+    cpConstraint* cpPinJointNew(cpBody *a, cpBody *b, cpVect anchr1, 
+        cpVect anchr2)
     cpConstraint* cpPivotJointNew(cpBody *a, cpBody *b, cpVect pivot)
     cpConstraint* cpPivotJointNew2(cpBody *a, cpBody *b, cpVect anchr1, 
         cpVect anchr2)
@@ -63,6 +69,8 @@ cdef extern from "chipmunk/chipmunk.h":
         cpVect anchr2, cpFloat restLength, cpFloat stiffness, cpFloat damping)
     cpConstraint* cpGrooveJointNew(cpBody *a, cpBody *b, cpVect groove_a, 
         cpVect groove_b, cpVect anchr2)
+    cpConstraint* cpGearJointNew(cpBody *a, cpBody *b, cpFloat phase, 
+        cpFloat ratio)
 
 cdef class Constraint:
     cdef cpConstraint *_constraint
@@ -100,3 +108,8 @@ cdef class DampedSpring(Constraint):
     cdef float rest_length
     cdef float stiffness
     cdef float damping
+
+cdef class GearJoint(Constraint):
+    cdef cpGearJoint *_gearjoint
+    cdef float phase
+    cdef float ratio
