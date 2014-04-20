@@ -19,10 +19,8 @@
  * SOFTWARE.
  */
  
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
 
 #include "chipmunk_private.h"
 
@@ -128,7 +126,8 @@ cpSpaceInit(cpSpace *space)
 	space->collisionHandlers = cpHashSetNew(0, (cpHashSetEqlFunc)handlerSetEql);
 	cpHashSetSetDefaultValue(space->collisionHandlers, &cpDefaultCollisionHandler);
 	
-	space->postStepCallbacks = NULL;
+	space->postStepCallbacks = cpArrayNew(0);
+	space->skipPostStep = cpFalse;
 	
 	cpBodyInitStatic(&space->_staticBody);
 	space->staticBody = &space->_staticBody;
@@ -142,9 +141,13 @@ cpSpaceNew(void)
 	return cpSpaceInit(cpSpaceAlloc());
 }
 
+static void cpBodyActivateWrap(cpBody *body, void *unused){cpBodyActivate(body);}
+
 void
 cpSpaceDestroy(cpSpace *space)
 {
+	cpSpaceEachBody(space, (cpSpaceBodyIteratorFunc)cpBodyActivateWrap, NULL);
+	
 	cpSpatialIndexFree(space->staticShapes);
 	cpSpatialIndexFree(space->activeShapes);
 	
@@ -164,8 +167,10 @@ cpSpaceDestroy(cpSpace *space)
 		cpArrayFree(space->allocatedBuffers);
 	}
 	
-	if(space->postStepCallbacks) cpHashSetEach(space->postStepCallbacks, freeWrap, NULL);
-	cpHashSetFree(space->postStepCallbacks);
+	if(space->postStepCallbacks){
+		cpArrayFreeEach(space->postStepCallbacks, cpfree);
+		cpArrayFree(space->postStepCallbacks);
+	}
 	
 	if(space->collisionHandlers) cpHashSetEach(space->collisionHandlers, freeWrap, NULL);
 	cpHashSetFree(space->collisionHandlers);
@@ -182,7 +187,7 @@ cpSpaceFree(cpSpace *space)
 
 #define cpAssertSpaceUnlocked(space) \
 	cpAssertHard(!space->locked, \
-		"This addition/removal cannot be done safely during a call to cpSpaceStep() or during a query. " \
+		"This operation cannot be done safely during a call to cpSpaceStep() or during a query. " \
 		"Put these calls into a post-step callback." \
 	);
 
@@ -256,7 +261,8 @@ cpSpaceAddShape(cpSpace *space, cpShape *shape)
 	cpBody *body = shape->body;
 	if(cpBodyIsStatic(body)) return cpSpaceAddStaticShape(space, shape);
 	
-	cpAssertHard(!shape->space, "This shape is already added to a space and cannot be added to another.");
+	cpAssertHard(shape->space != space, "You have already added this shape to this space. You must not add it a second time.");
+	cpAssertHard(!shape->space, "You have already added this shape to another space. You cannot add it to a second.");
 	cpAssertSpaceUnlocked(space);
 	
 	cpBodyActivate(body);
@@ -272,7 +278,9 @@ cpSpaceAddShape(cpSpace *space, cpShape *shape)
 cpShape *
 cpSpaceAddStaticShape(cpSpace *space, cpShape *shape)
 {
-	cpAssertHard(!shape->space, "This shape is already added to a space and cannot be added to another.");
+	cpAssertHard(shape->space != space, "You have already added this shape to this space. You must not add it a second time.");
+	cpAssertHard(!shape->space, "You have already added this shape to another space. You cannot add it to a second.");
+	cpAssertHard(cpBodyIsRogue(shape->body), "You are adding a static shape to a dynamic body. Did you mean to attach it to a static or rogue body? See the documentation for more information.");
 	cpAssertSpaceUnlocked(space);
 	
 	cpBody *body = shape->body;
@@ -287,8 +295,9 @@ cpSpaceAddStaticShape(cpSpace *space, cpShape *shape)
 cpBody *
 cpSpaceAddBody(cpSpace *space, cpBody *body)
 {
-	cpAssertHard(!cpBodyIsStatic(body), "Static bodies cannot be added to a space as they are not meant to be simulated.");
-	cpAssertHard(!body->space, "This body is already added to a space and cannot be added to another.");
+	cpAssertHard(!cpBodyIsStatic(body), "Do not add static bodies to a space. Static bodies do not move and should not be simulated.");
+	cpAssertHard(body->space != space, "You have already added this body to this space. You must not add it a second time.");
+	cpAssertHard(!body->space, "You have already added this body to another space. You cannot add it to a second.");
 	cpAssertSpaceUnlocked(space);
 	
 	cpArrayPush(space->bodies, body);
@@ -300,7 +309,9 @@ cpSpaceAddBody(cpSpace *space, cpBody *body)
 cpConstraint *
 cpSpaceAddConstraint(cpSpace *space, cpConstraint *constraint)
 {
-	cpAssertHard(!constraint->space, "This shape is already added to a space and cannot be added to another.");
+	cpAssertHard(constraint->space != space, "You have already added this constraint to this space. You must not add it a second time.");
+	cpAssertHard(!constraint->space, "You have already added this constraint to another space. You cannot add it to a second.");
+	cpAssertHard(constraint->a && constraint->b, "Constraint is attached to a NULL body.");
 	cpAssertSpaceUnlocked(space);
 	
 	cpBodyActivate(constraint->a);
@@ -350,8 +361,10 @@ cachedArbitersFilter(cpArbiter *arb, struct arbiterFilterContext *context)
 void
 cpSpaceFilterArbiters(cpSpace *space, cpBody *body, cpShape *filter)
 {
-	struct arbiterFilterContext context = {space, body, filter};
-	cpHashSetFilter(space->cachedArbiters, (cpHashSetFilterFunc)cachedArbitersFilter, &context);
+	cpSpaceLock(space); {
+		struct arbiterFilterContext context = {space, body, filter};
+		cpHashSetFilter(space->cachedArbiters, (cpHashSetFilterFunc)cachedArbitersFilter, &context);
+	} cpSpaceUnlock(space, cpTrue);
 }
 
 void
@@ -428,6 +441,45 @@ cpBool cpSpaceContainsConstraint(cpSpace *space, cpConstraint *constraint)
 	return (constraint->space == space);
 }
 
+//MARK: Static/rogue body conversion.
+
+void
+cpSpaceConvertBodyToStatic(cpSpace *space, cpBody *body)
+{
+	cpAssertHard(!cpBodyIsStatic(body), "Body is already static.");
+	cpAssertHard(cpBodyIsRogue(body), "Remove the body from the space before calling this function.");
+	cpAssertSpaceUnlocked(space);
+	
+	cpBodySetMass(body, INFINITY);
+	cpBodySetMoment(body, INFINITY);
+	
+	cpBodySetVel(body, cpvzero);
+	cpBodySetAngVel(body, 0.0f);
+	
+	body->node.idleTime = INFINITY;
+	CP_BODY_FOREACH_SHAPE(body, shape){
+		cpSpatialIndexRemove(space->activeShapes, shape, shape->hashid);
+		cpSpatialIndexInsert(space->staticShapes, shape, shape->hashid);
+	}
+}
+
+void
+cpSpaceConvertBodyToDynamic(cpSpace *space, cpBody *body, cpFloat m, cpFloat i)
+{
+	cpAssertHard(cpBodyIsStatic(body), "Body is already dynamic.");
+	cpAssertSpaceUnlocked(space);
+	
+	cpBodyActivateStatic(body, NULL);
+	
+	cpBodySetMass(body, m);
+	cpBodySetMoment(body, i);
+	
+	body->node.idleTime = 0.0f;
+	CP_BODY_FOREACH_SHAPE(body, shape){
+		cpSpatialIndexRemove(space->staticShapes, shape, shape->hashid);
+		cpSpatialIndexInsert(space->activeShapes, shape, shape->hashid);
+	}
+}
 
 //MARK: Iteration
 

@@ -72,7 +72,10 @@ typedef struct Thread {
 	Pair *next;
 } Thread;
 
-struct Pair { Thread a, b; };
+struct Pair {
+	Thread a, b;
+	cpCollisionID id;
+};
 
 //MARK: Misc Functions
 
@@ -105,11 +108,11 @@ GetRootIfTree(cpSpatialIndex *index){
 	return (index && index->klass == Klass() ? ((cpBBTree *)index)->root : NULL);
 }
 
-static inline cpTimestamp
-GetStamp(cpBBTree *tree)
+static inline cpBBTree *
+GetMasterTree(cpBBTree *tree)
 {
 	cpBBTree *dynamicTree = GetTree(tree->spatialIndex.dynamicIndex);
-	return (dynamicTree ? dynamicTree->stamp : tree->stamp);
+	return (dynamicTree ? dynamicTree : tree);
 }
 
 static inline void
@@ -128,6 +131,10 @@ IncrementStamp(cpBBTree *tree)
 static void
 PairRecycle(cpBBTree *tree, Pair *pair)
 {
+	// Share the pool of the master tree.
+	// TODO would be lovely to move the pairs stuff into an external data structure.
+	tree = GetMasterTree(tree);
+	
 	pair->a.next = tree->pooledPairs;
 	tree->pooledPairs = pair;
 }
@@ -135,6 +142,10 @@ PairRecycle(cpBBTree *tree, Pair *pair)
 static Pair *
 PairFromPool(cpBBTree *tree)
 {
+	// Share the pool of the master tree.
+	// TODO would be lovely to move the pairs stuff into an external data structure.
+	tree = GetMasterTree(tree);
+	
 	Pair *pair = tree->pooledPairs;
 	
 	if(pair){
@@ -197,7 +208,7 @@ PairInsert(Node *a, Node *b, cpBBTree *tree)
 {
 	Pair *nextA = a->PAIRS, *nextB = b->PAIRS;
 	Pair *pair = PairFromPool(tree);
-	Pair temp = {{NULL, a, nextA},{NULL, b, nextB}};
+	Pair temp = {{NULL, a, nextA},{NULL, b, nextB}, 0};
 	
 	a->PAIRS = b->PAIRS = pair;
 	*pair = temp;
@@ -308,7 +319,7 @@ NodeReplaceChild(Node *parent, Node *child, Node *value, cpBBTree *tree)
 static inline cpFloat
 cpBBProximity(cpBB a, cpBB b)
 {
-	return cpfabs(a.l + a.r - b.l - b.r) + cpfabs(a.b + b.t - b.b - b.t);
+	return cpfabs(a.l + a.r - b.l - b.r) + cpfabs(a.b + a.t - b.b - b.t);
 }
 
 static Node *
@@ -343,7 +354,7 @@ SubtreeQuery(Node *subtree, void *obj, cpBB bb, cpSpatialIndexQueryFunc func, vo
 {
 	if(cpBBIntersects(subtree->bb, bb)){
 		if(NodeIsLeaf(subtree)){
-			func(obj, subtree->obj, data);
+			func(obj, subtree->obj, 0, data);
 		} else {
 			SubtreeQuery(subtree->A, obj, bb, func, data);
 			SubtreeQuery(subtree->B, obj, bb, func, data);
@@ -420,7 +431,7 @@ MarkLeafQuery(Node *subtree, Node *leaf, cpBool left, MarkContext *context)
 				PairInsert(leaf, subtree, context->tree);
 			} else {
 				if(subtree->STAMP < leaf->STAMP) PairInsert(subtree, leaf, context->tree);
-				context->func(leaf->obj, subtree->obj, context->data);
+				context->func(leaf->obj, subtree->obj, 0, context->data);
 			}
 		} else {
 			MarkLeafQuery(subtree->A, leaf, left, context);
@@ -433,7 +444,7 @@ static void
 MarkLeaf(Node *leaf, MarkContext *context)
 {
 	cpBBTree *tree = context->tree;
-	if(leaf->STAMP == GetStamp(tree)){
+	if(leaf->STAMP == GetMasterTree(tree)->stamp){
 		Node *staticRoot = context->staticRoot;
 		if(staticRoot) MarkLeafQuery(staticRoot, leaf, cpFalse, context);
 		
@@ -448,7 +459,7 @@ MarkLeaf(Node *leaf, MarkContext *context)
 		Pair *pair = leaf->PAIRS;
 		while(pair){
 			if(leaf == pair->b.leaf){
-				context->func(pair->a.leaf->obj, leaf->obj, context->data);
+				pair->id = context->func(pair->a.leaf->obj, leaf->obj, pair->id, context->data);
 				pair = pair->b.next;
 			} else {
 				pair = pair->a.next;
@@ -464,7 +475,7 @@ MarkSubtree(Node *subtree, MarkContext *context)
 		MarkLeaf(subtree, context);
 	} else {
 		MarkSubtree(subtree->A, context);
-		MarkSubtree(subtree->B, context);
+		MarkSubtree(subtree->B, context); // TODO Force TCO here?
 	}
 }
 
@@ -497,15 +508,15 @@ LeafUpdate(Node *leaf, cpBBTree *tree)
 		tree->root = SubtreeInsert(root, leaf, tree);
 		
 		PairsClear(leaf, tree);
-		leaf->STAMP = GetStamp(tree);
+		leaf->STAMP = GetMasterTree(tree)->stamp;
 		
 		return cpTrue;
+	} else {
+		return cpFalse;
 	}
-	
-	return cpFalse;
 }
 
-static void VoidQueryFunc(void *obj1, void *obj2, void *data){}
+static cpCollisionID VoidQueryFunc(void *obj1, void *obj2, cpCollisionID id, void *data){return id;}
 
 static void
 LeafAddPairs(Node *leaf, cpBBTree *tree)
@@ -599,7 +610,7 @@ cpBBTreeInsert(cpBBTree *tree, void *obj, cpHashValue hashid)
 	Node *root = tree->root;
 	tree->root = SubtreeInsert(root, leaf, tree);
 	
-	leaf->STAMP = GetStamp(tree);
+	leaf->STAMP = GetMasterTree(tree)->stamp;
 	LeafAddPairs(leaf, tree);
 	IncrementStamp(tree);
 }
@@ -622,13 +633,15 @@ cpBBTreeContains(cpBBTree *tree, void *obj, cpHashValue hashid)
 
 //MARK: Reindex
 
+static void LeafUpdateWrap(Node *leaf, cpBBTree *tree) {LeafUpdate(leaf, tree);}
+
 static void
 cpBBTreeReindexQuery(cpBBTree *tree, cpSpatialIndexQueryFunc func, void *data)
 {
 	if(!tree->root) return;
 	
 	// LeafUpdate() may modify tree->root. Don't cache it.
-	cpHashSetEach(tree->leaves, (cpHashSetIteratorFunc)LeafUpdate, tree);
+	cpHashSetEach(tree->leaves, (cpHashSetIteratorFunc)LeafUpdateWrap, tree);
 	
 	cpSpatialIndex *staticIndex = tree->spatialIndex.staticIndex;
 	Node *staticRoot = (staticIndex && staticIndex->klass == Klass() ? ((cpBBTree *)staticIndex)->root : NULL);
@@ -657,13 +670,6 @@ cpBBTreeReindexObject(cpBBTree *tree, void *obj, cpHashValue hashid)
 }
 
 //MARK: Query
-
-static void
-cpBBTreePointQuery(cpBBTree *tree, cpVect point, cpSpatialIndexQueryFunc func, void *data)
-{
-	Node *root = tree->root;
-	if(root) SubtreeQuery(root, &point, cpBBNew(point.x, point.y, point.x, point.y), func, data);
-}
 
 static void
 cpBBTreeSegmentQuery(cpBBTree *tree, void *obj, cpVect a, cpVect b, cpFloat t_exit, cpSpatialIndexSegmentQueryFunc func, void *data)
@@ -714,9 +720,8 @@ static cpSpatialIndexClass klass = {
 	(cpSpatialIndexReindexObjectImpl)cpBBTreeReindexObject,
 	(cpSpatialIndexReindexQueryImpl)cpBBTreeReindexQuery,
 	
-	(cpSpatialIndexPointQueryImpl)cpBBTreePointQuery,
-	(cpSpatialIndexSegmentQueryImpl)cpBBTreeSegmentQuery,
 	(cpSpatialIndexQueryImpl)cpBBTreeQuery,
+	(cpSpatialIndexSegmentQueryImpl)cpBBTreeSegmentQuery,
 };
 
 static inline cpSpatialIndexClass *Klass(){return &klass;}

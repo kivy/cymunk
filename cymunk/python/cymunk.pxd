@@ -1,4 +1,3 @@
-from libc.math cimport sqrt
 ctypedef int bool
 ctypedef int datapointer
 
@@ -128,6 +127,8 @@ cdef extern from "chipmunk/chipmunk.h":
     cpFloat cpArbiterGetDepth(cpArbiter *arb, int i)
     cpFloat cpArbiterTotalKE(const cpArbiter *arb)
     
+    cpFloat cpvlength(const cpVect v)
+    cpFloat cpvlengthsq(const cpVect v)
     cpVect cpvunrotate(const cpVect v1, const cpVect v2)
     cpVect cpvrotate(const cpVect v1, const cpVect v2)
     cpFloat cpvdot(const cpVect v1, const cpVect v2)

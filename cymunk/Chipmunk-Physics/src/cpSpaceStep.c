@@ -19,78 +19,41 @@
  * SOFTWARE.
  */
  
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-
 #include "chipmunk_private.h"
 
 //MARK: Post Step Callback Functions
 
-typedef struct cpPostStepCallback {
-	cpPostStepFunc func;
-	void *obj;
-	void *data;
-} cpPostStepCallback;
-
-static cpBool
-postStepFuncSetEql(cpPostStepCallback *a, cpPostStepCallback *b){
-	return a->obj == b->obj;
-}
-
-static void *
-postStepFuncSetTrans(cpPostStepCallback *callback, void *ignored)
+cpPostStepCallback *
+cpSpaceGetPostStepCallback(cpSpace *space, void *key)
 {
-	cpPostStepCallback *value = (cpPostStepCallback *)cpcalloc(1, sizeof(cpPostStepCallback));
-	(*value) = (*callback);
+	cpArray *arr = space->postStepCallbacks;
+	for(int i=0; i<arr->num; i++){
+		cpPostStepCallback *callback = (cpPostStepCallback *)arr->arr[i];
+		if(callback && callback->key == key) return callback;
+	}
 	
-	return value;
+	return NULL;
 }
 
-void
-cpSpaceAddPostStepCallback(cpSpace *space, cpPostStepFunc func, void *obj, void *data)
+static void PostStepDoNothing(cpSpace *space, void *obj, void *data){}
+
+cpBool
+cpSpaceAddPostStepCallback(cpSpace *space, cpPostStepFunc func, void *key, void *data)
 {
 	cpAssertWarn(space->locked,
 		"Adding a post-step callback when the space is not locked is unnecessary. "
 		"Post-step callbacks will not called until the end of the next call to cpSpaceStep() or the next query.");
 	
-	if(!space->postStepCallbacks){
-		space->postStepCallbacks = cpHashSetNew(0, (cpHashSetEqlFunc)postStepFuncSetEql);
-	}
-	
-	cpPostStepCallback callback = {func, obj, data};
-	cpHashSetInsert(space->postStepCallbacks, (cpHashValue)obj, &callback, NULL, (cpHashSetTransFunc)postStepFuncSetTrans);
-}
-
-void *
-cpSpaceGetPostStepData(cpSpace *space, void *obj)
-{
-	if(space->postStepCallbacks){
-		cpPostStepCallback query = {NULL, obj, NULL};
-		cpPostStepCallback *callback = (cpPostStepCallback *)cpHashSetFind(space->postStepCallbacks, (cpHashValue)obj, &query);
-		return (callback ? callback->data : NULL);
-	} else {
-		return NULL;
-	}
-}
-
-static void
-cpSpacePostStepCallbackSetIter(cpPostStepCallback *callback, cpSpace *space)
-{
-	callback->func(space, callback->obj, callback->data);
-	cpfree(callback);
-}
-
-static void
-cpSpaceRunPostStepCallbacks(cpSpace *space)
-{
-	// Loop because post step callbacks may add more post step callbacks directly or indirectly.
-	while(space->postStepCallbacks){
-		cpHashSet *callbacks = space->postStepCallbacks;
-		space->postStepCallbacks = NULL;
+	if(!cpSpaceGetPostStepCallback(space, key)){
+		cpPostStepCallback *callback = (cpPostStepCallback *)cpcalloc(1, sizeof(cpPostStepCallback));
+		callback->func = (func ? func : PostStepDoNothing);
+		callback->key = key;
+		callback->data = data;
 		
-		cpHashSetEach(callbacks, (cpHashSetIteratorFunc)cpSpacePostStepCallbackSetIter, space);
-		cpHashSetFree(callbacks);
+		cpArrayPush(space->postStepCallbacks, callback);
+		return cpTrue;
+	} else {
+		return cpFalse;
 	}
 }
 
@@ -108,15 +71,36 @@ cpSpaceUnlock(cpSpace *space, cpBool runPostStep)
 	space->locked--;
 	cpAssertHard(space->locked >= 0, "Internal Error: Space lock underflow.");
 	
-	if(!space->locked && runPostStep){
+	if(space->locked == 0){
 		cpArray *waking = space->rousedBodies;
+		
 		for(int i=0, count=waking->num; i<count; i++){
 			cpSpaceActivateBody(space, (cpBody *)waking->arr[i]);
+			waking->arr[i] = NULL;
 		}
 		
 		waking->num = 0;
 		
-		cpSpaceRunPostStepCallbacks(space);
+		if(space->locked == 0 && runPostStep && !space->skipPostStep){
+			space->skipPostStep = cpTrue;
+			
+			cpArray *arr = space->postStepCallbacks;
+			for(int i=0; i<arr->num; i++){
+				cpPostStepCallback *callback = (cpPostStepCallback *)arr->arr[i];
+				cpPostStepFunc func = callback->func;
+				
+				// Mark the func as NULL in case calling it calls cpSpaceRunPostStepCallbacks() again.
+				// TODO need more tests around this case I think.
+				callback->func = NULL;
+				if(func) func(space, callback->key, callback->data);
+				
+				arr->arr[i] = NULL;
+				cpfree(callback);
+			}
+			
+			arr->num = 0;
+			space->skipPostStep = cpFalse;
+		}
 	}
 }
 
@@ -229,23 +213,26 @@ queryReject(cpShape *a, cpShape *b)
 		|| (a->group && a->group == b->group)
 		// Don't collide objects that don't share at least on layer.
 		|| !(a->layers & b->layers)
+		// Don't collide infinite mass objects
+		|| (a->body->m == INFINITY && b->body->m == INFINITY)
 	);
 }
 
 // Callback from the spatial hash.
-void
-cpSpaceCollideShapes(cpShape *a, cpShape *b, cpSpace *space)
+cpCollisionID
+cpSpaceCollideShapes(cpShape *a, cpShape *b, cpCollisionID id, cpSpace *space)
 {
 	// Reject any of the simple cases
-	if(queryReject(a,b)) return;
+	if(queryReject(a,b)) return id;
 	
 	cpCollisionHandler *handler = cpSpaceLookupHandler(space, a->collision_type, b->collision_type);
 	
 	cpBool sensor = a->sensor || b->sensor;
-	if(sensor && handler == &cpDefaultCollisionHandler) return;
+	if(sensor && handler == &cpDefaultCollisionHandler) return id;
 	
 	// Shape 'a' should have the lower shape type. (required by cpCollideShapes() )
-	if(a->klass->type > b->klass->type){
+	// TODO remove me: a < b comparison is for debugging collisions
+	if(a->klass->type > b->klass->type || (a->klass->type == b->klass->type && a < b)){
 		cpShape *temp = a;
 		a = b;
 		b = temp;
@@ -253,8 +240,8 @@ cpSpaceCollideShapes(cpShape *a, cpShape *b, cpSpace *space)
 	
 	// Narrow-phase collision detection.
 	cpContact *contacts = cpContactBufferGetArray(space);
-	int numContacts = cpCollideShapes(a, b, contacts);
-	if(!numContacts) return; // Shapes are not colliding.
+	int numContacts = cpCollideShapes(a, b, &id, contacts);
+	if(!numContacts) return id; // Shapes are not colliding.
 	cpSpacePushContacts(space, numContacts);
 	
 	// Get an arbiter from space->arbiterSet for the two shapes.
@@ -291,6 +278,7 @@ cpSpaceCollideShapes(cpShape *a, cpShape *b, cpSpace *space)
 	
 	// Time stamp the arbiter so we know it was used recently.
 	arb->stamp = space->stamp;
+	return id;
 }
 
 // Hashset filter func to throw away old arbiters.
@@ -313,8 +301,8 @@ cpSpaceArbiterSetFilter(cpArbiter *arb, cpSpace *space)
 	
 	// Arbiter was used last frame, but not this one
 	if(ticks >= 1 && arb->state != cpArbiterStateCached){
-		cpArbiterCallSeparate(arb, space);
 		arb->state = cpArbiterStateCached;
+		cpArbiterCallSeparate(arb, space);
 	}
 	
 	if(ticks >= space->collisionPersistence){
@@ -427,7 +415,7 @@ cpSpaceStep(cpSpace *space, cpFloat dt)
 				
 			for(int j=0; j<constraints->num; j++){
 				cpConstraint *constraint = (cpConstraint *)constraints->arr[j];
-				constraint->klass->applyImpulse(constraint);
+				constraint->klass->applyImpulse(constraint, dt);
 			}
 		}
 		
