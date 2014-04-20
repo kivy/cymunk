@@ -16,7 +16,7 @@ cdef class Body:
             self._body = cpBodyNew(INFINITY, INFINITY)
         else:
             self._body = cpBodyNew(float(mass), float(moment))
-            self.automanaged = 1
+        self.automanaged = 1
         #self._position_callback = None
         #self._velocity_callback = None
 
