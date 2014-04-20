@@ -1,5 +1,7 @@
+from libc.math cimport sqrt
 ctypedef int bool
 ctypedef int datapointer
+
 
 cdef extern from "chipmunk/chipmunk.h":
     cdef void cpInitChipmunk()
@@ -131,7 +133,13 @@ cdef extern from "chipmunk/chipmunk.h":
     cpFloat cpvdot(const cpVect v1, const cpVect v2)
     cpVect cpvsub(const cpVect v1, const cpVect v2)
     cpBool cpvnear(const cpVect v1, const cpVect v2, const cpFloat dist)
-
+    cpVect cpvneg(const cpVect v)
+    cpVect cpvadd(const cpVect v1, const cpVect v2)
+    cpVect cpvmult(const cpVect v, const cpFloat s)
+    cpFloat cpvcross(const cpVect v1, const cpVect v2)
+    cpVect cpvnormalize(const cpVect v)
+    cpFloat cpvdist(const cpVect v1, const cpVect v2)
+    cpFloat cpvdistsq(const cpVect v1, const cpVect v2)
 
 
 include "core.pxd"
