@@ -117,6 +117,8 @@ cdef class Vec2d:
         y = self.v.x*sin + self.v.y*cos
         self.v.x = x
         self.v.y = y
+        return [x,y]
+        # changed to work with new Poly.get_vertices() 
 
 cdef class Contact:
     '''
