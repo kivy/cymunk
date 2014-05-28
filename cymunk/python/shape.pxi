@@ -1,4 +1,5 @@
 from libc.stdlib cimport malloc, free
+from math import atan2
 
 def is_clockwise(points): 
     """
@@ -349,12 +350,29 @@ cdef class Poly(Shape):
         rv = self._body.rotation_vector
         bp = self._body.position
         o = self.offset
-        for i in range(self._vertices_count):
-            p = (self._vertices[i] + o).cpvrotate(rv) + bp
-            points.append(Vec2d(p))
-            
-        return points
 
+        # if no offset is specified it will show up as none
+        if o == None:
+            o = Vec2d(0,0)
+
+        for i in range(self._vertices_count):
+            # old code: 
+            # python did not like Vec2d + Vec2d, the + operator was not defined
+            
+            # new code:
+            px = (self._vertices[i].x + o.x)
+            py = (self._vertices[i].y + o.y)
+            p1 = Vec2d(px,py)
+            p = p1.rotate(atan2(rv.y,rv.x)) 
+            points.append((p[0]+bp.x,p[1]+bp.y))
+        return points 
+        
+        # EXAMPLE:
+        # a = poly.get_vertices()
+        #   output: a = [ (1,1), (2,1), (2,2), (1,2) ]
+        
+        # verts = [ i[j] for i in a for j in range(len(i)) ]
+        #   output: verts = [ 1,1,2,1,2,2,1,2 ]
 
 cdef class SegmentQueryInfo:
     def __cinit__(self, shape, start, end, t, n):
