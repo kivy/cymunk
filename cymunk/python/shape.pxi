@@ -259,6 +259,9 @@ cdef class Segment(Shape):
 #        so it should be marked as depricated
 #        and ridded then. Poly.create_box
 #        should be used instead 
+#   This class is documented in the chipmunk2d api. I am 
+#   more interested in producing a wrapper of chipmunk2d than 
+#   compatibility with pymunk. -Kovak
 
 cdef class BoxShape(Shape):
 
@@ -346,12 +349,19 @@ cdef class Poly(Shape):
         """
         cdef int i
         cdef list points = []
-        rv = self._body.rotation_vector
-        bp = self._body.position
-        o = self.offset
+        cdef object points_a = points.append
+        cdef Body body = self._body
+        cdef cpBody* ibody = body._body
+        cdef cpVect rv = ibody.rot
+        cdef cpVect bp = ibody.p
+        cdef cpVect o = self._offset
+        cdef cpVect * vertices = self._vertices
+        cdef cpVect vert
+        cdef cpVect p
         for i in range(self._vertices_count):
-            p = (self._vertices[i] + o).cpvrotate(rv) + bp
-            points.append(Vec2d(p))
+            vert = vertices[i]
+            p = cpvadd(cpvrotate((cpvadd(vert, o)), rv), bp)
+            points_a(Vec2d(p.x, p.y))
             
         return points
 

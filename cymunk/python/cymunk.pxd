@@ -141,6 +141,8 @@ cdef extern from "chipmunk/chipmunk.h":
     cpVect cpvnormalize(const cpVect v)
     cpFloat cpvdist(const cpVect v1, const cpVect v2)
     cpFloat cpvdistsq(const cpVect v1, const cpVect v2)
+    cpVect cpvperp(const cpVect v)
+    cpVect cpvrperp(const cpVect v)
 
 
 include "core.pxd"
