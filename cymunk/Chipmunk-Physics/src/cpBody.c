@@ -19,9 +19,7 @@
  * SOFTWARE.
  */
  
-#include <stdlib.h>
 #include <float.h>
-#include <math.h>
 
 #include "chipmunk_private.h"
 #include "constraints/util.h"
@@ -126,7 +124,7 @@ cpBodySanityCheck(cpBody *body)
 	cpAssertSoft(body->w == body->w && cpfabs(body->w) != INFINITY, "Body's angular velocity is invalid.");
 	cpAssertSoft(body->t == body->t && cpfabs(body->t) != INFINITY, "Body's torque is invalid.");
 	
-	cpv_assert_sane(body->rot, "Internal error: Body's rotation vector is invalid.");
+	cpv_assert_sane(body->rot, "Body's rotation vector is invalid.");
 	
 	cpAssertSoft(body->v_limit == body->v_limit, "Body's velocity limit is invalid.");
 	cpAssertSoft(body->w_limit == body->w_limit, "Body's angular velocity limit is invalid.");
@@ -144,6 +142,7 @@ cpBodySetMass(cpBody *body, cpFloat mass)
 	cpBodyActivate(body);
 	body->m = mass;
 	body->m_inv = 1.0f/mass;
+	cpBodyAssertSane(body);
 }
 
 void
@@ -154,6 +153,7 @@ cpBodySetMoment(cpBody *body, cpFloat moment)
 	cpBodyActivate(body);
 	body->i = moment;
 	body->i_inv = 1.0f/moment;
+	cpBodyAssertSane(body);
 }
 
 void
@@ -210,8 +210,8 @@ void
 cpBodySetPos(cpBody *body, cpVect pos)
 {
 	cpBodyActivate(body);
-	cpBodyAssertSane(body);
 	body->p = pos;
+	cpBodyAssertSane(body);
 }
 
 static inline void
@@ -219,13 +219,13 @@ setAngle(cpBody *body, cpFloat angle)
 {
 	body->a = angle;//fmod(a, (cpFloat)M_PI*2.0f);
 	body->rot = cpvforangle(angle);
+	cpBodyAssertSane(body);
 }
 
 void
 cpBodySetAngle(cpBody *body, cpFloat angle)
 {
 	cpBodyActivate(body);
-	cpBodyAssertSane(body);
 	setAngle(body, angle);
 }
 

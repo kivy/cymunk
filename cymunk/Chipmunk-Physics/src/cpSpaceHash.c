@@ -19,9 +19,6 @@
  * SOFTWARE.
  */
 
-#include <math.h>
-#include <stdlib.h>
-
 #include "chipmunk_private.h"
 #include "prime.h"
 
@@ -365,7 +362,7 @@ query_helper(cpSpaceHash *hash, cpSpaceHashBin **bin_ptr, void *obj, cpSpatialIn
 		if(hand->stamp == hash->stamp || obj == other){
 			continue;
 		} else if(other){
-			func(obj, other, data);
+			func(obj, other, 0, data);
 			hand->stamp = hash->stamp;
 		} else {
 			// The object for this handle has been removed
@@ -374,16 +371,6 @@ query_helper(cpSpaceHash *hash, cpSpaceHashBin **bin_ptr, void *obj, cpSpatialIn
 			goto restart; // GCC not smart enough/able to tail call an inlined function.
 		}
 	}
-}
-
-static void
-cpSpaceHashPointQuery(cpSpaceHash *hash, cpVect point, cpSpatialIndexQueryFunc func, void *data)
-{
-	cpFloat dim = hash->celldim;
-	cpHashValue idx = hash_func(floor_int(point.x/dim), floor_int(point.y/dim), hash->numcells);  // Fix by ShiftZ
-	
-	query_helper(hash, &hash->table[idx], &point, func, data);
-	hash->stamp++;
 }
 
 static void
@@ -597,9 +584,8 @@ static cpSpatialIndexClass klass = {
 	(cpSpatialIndexReindexObjectImpl)cpSpaceHashRehashObject,
 	(cpSpatialIndexReindexQueryImpl)cpSpaceHashReindexQuery,
 	
-	(cpSpatialIndexPointQueryImpl)cpSpaceHashPointQuery,
-	(cpSpatialIndexSegmentQueryImpl)cpSpaceHashSegmentQuery,
 	(cpSpatialIndexQueryImpl)cpSpaceHashQuery,
+	(cpSpatialIndexSegmentQueryImpl)cpSpaceHashSegmentQuery,
 };
 
 static inline cpSpatialIndexClass *Klass(){return &klass;}

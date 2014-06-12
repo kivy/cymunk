@@ -19,9 +19,6 @@
  * SOFTWARE.
  */
 
-#include <stdlib.h>
-#include <math.h>
-
 #include "chipmunk_private.h"
 #include "constraints/util.h"
 
@@ -45,6 +42,8 @@ preStep(cpDampedRotarySpring *spring, cpFloat dt)
 
 	// apply spring torque
 	cpFloat j_spring = spring->springTorqueFunc((cpConstraint *)spring, a->a - b->a)*dt;
+	spring->jAcc = j_spring;
+	
 	a->w -= j_spring*a->i_inv;
 	b->w += j_spring*b->i_inv;
 }
@@ -52,7 +51,7 @@ preStep(cpDampedRotarySpring *spring, cpFloat dt)
 static void applyCachedImpulse(cpDampedRotarySpring *spring, cpFloat dt_coef){}
 
 static void
-applyImpulse(cpDampedRotarySpring *spring)
+applyImpulse(cpDampedRotarySpring *spring, cpFloat dt)
 {
 	cpBody *a = spring->constraint.a;
 	cpBody *b = spring->constraint.b;
@@ -67,14 +66,16 @@ applyImpulse(cpDampedRotarySpring *spring)
 	
 	//apply_impulses(a, b, spring->r1, spring->r2, cpvmult(spring->n, v_damp*spring->nMass));
 	cpFloat j_damp = w_damp*spring->iSum;
+	spring->jAcc += j_damp;
+	
 	a->w += j_damp*a->i_inv;
 	b->w -= j_damp*b->i_inv;
 }
 
 static cpFloat
-getImpulse(cpConstraint *constraint)
+getImpulse(cpDampedRotarySpring *spring)
 {
-	return 0.0f;
+	return spring->jAcc;
 }
 
 static const cpConstraintClass klass = {
@@ -100,6 +101,8 @@ cpDampedRotarySpringInit(cpDampedRotarySpring *spring, cpBody *a, cpBody *b, cpF
 	spring->stiffness = stiffness;
 	spring->damping = damping;
 	spring->springTorqueFunc = (cpDampedRotarySpringTorqueFunc)defaultSpringTorque;
+	
+	spring->jAcc = 0.0f;
 	
 	return spring;
 }

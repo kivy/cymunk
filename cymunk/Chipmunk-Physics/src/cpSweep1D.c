@@ -19,9 +19,6 @@
  * SOFTWARE.
  */
 
-#include <math.h>
-#include <stdlib.h>
-
 #include "chipmunk_private.h"
 
 static inline cpSpatialIndexClass *Klass();
@@ -186,14 +183,8 @@ cpSweep1DQuery(cpSweep1D *sweep, void *obj, cpBB bb, cpSpatialIndexQueryFunc fun
 	TableCell *table = sweep->table;
 	for(int i=0, count=sweep->num; i<count; i++){
 		TableCell cell = table[i];
-		if(BoundsOverlap(bounds, cell.bounds) && obj != cell.obj) func(obj, cell.obj, data);
+		if(BoundsOverlap(bounds, cell.bounds) && obj != cell.obj) func(obj, cell.obj, 0, data);
 	}
-}
-
-static void
-cpSweep1DPointQuery(cpSweep1D *sweep, cpVect point, cpSpatialIndexQueryFunc func, void *data)
-{
-	cpSweep1DQuery(sweep, &point, cpBBNew(point.x, point.y, point.x, point.y), func, data);
 }
 
 static void
@@ -232,7 +223,7 @@ cpSweep1DReindexQuery(cpSweep1D *sweep, cpSpatialIndexQueryFunc func, void *data
 		cpFloat max = cell.bounds.max;
 		
 		for(int j=i+1; table[j].bounds.min < max && j<count; j++){
-			func(cell.obj, table[j].obj, data);
+			func(cell.obj, table[j].obj, 0, data);
 		}
 	}
 	
@@ -255,9 +246,8 @@ static cpSpatialIndexClass klass = {
 	(cpSpatialIndexReindexObjectImpl)cpSweep1DReindexObject,
 	(cpSpatialIndexReindexQueryImpl)cpSweep1DReindexQuery,
 	
-	(cpSpatialIndexPointQueryImpl)cpSweep1DPointQuery,
-	(cpSpatialIndexSegmentQueryImpl)cpSweep1DSegmentQuery,
 	(cpSpatialIndexQueryImpl)cpSweep1DQuery,
+	(cpSpatialIndexSegmentQueryImpl)cpSweep1DSegmentQuery,
 };
 
 static inline cpSpatialIndexClass *Klass(){return &klass;}
