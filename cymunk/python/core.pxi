@@ -23,13 +23,13 @@ def moment_for_segment(mass, a, b):
     return cpMomentForSegment(mass, cpv(a.x, a.y), cpv(b.x, b.y))
 
 
-#def moment_for_poly(mass, vertices,  offset=(0, 0)):
-#    verts = (Vec2d * len(vertices))
-#    verts = verts(Vec2d(0, 0))
-#    for (i, vertex) in enumerate(vertices):
-#        verts[i].x = vertex[0]
-#        verts[i].y = vertex[1]
-#    return cpMomentForPoly(mass, len(verts), verts, offset)
+def moment_for_poly(mass, vertices,  offset=(0, 0)):
+    vertcount = len(vertices)
+    cdef cpVect * cverts
+    cverts = <cpVect *>malloc(sizeof(cpVect) * vertcount)
+    for (i, vertex) in enumerate(vertices):
+        cverts[i] = cpv(vertex[0], vertex[1])
+    return cpMomentForPoly(mass, vertcount, cverts, cpv(offset[0], offset[1]))
 
 
 def moment_for_box(mass, width, height):
