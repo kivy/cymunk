@@ -339,6 +339,18 @@ cdef class Poly(Shape):
         vs = [(-x, -y), (-x, y), (x, y), (x, -y)]
         return Poly(body, vs)
 
+    def get_local_vertices(self): 
+        """Get the vertices in world coordinates for the polygon
+        
+        :return: [`Vec2d`] in world coords
+        """
+        cdef int i
+        cdef list points = []
+        for i in range(self._vertices_count):
+            points.append(self._vertices[i])
+            
+        return points
+
     def get_vertices(self): 
         """Get the vertices in world coordinates for the polygon
         
