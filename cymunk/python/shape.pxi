@@ -365,6 +365,22 @@ cdef class Poly(Shape):
             
         return points
 
+    def get_local_vertices(self): 
+        """Get the vertices in local coordinates for the polygon
+        
+        :return: [`Vec2d`] in local coords
+        """
+        cdef int i
+        cdef list points = []
+        cdef object points_a = points.append
+        cdef cpVect * vertices = self._vertices
+        cdef cpVect vert
+        for i in range(self._vertices_count):
+            vert = vertices[i]
+            points_a(Vec2d(vert.x, vert.y))
+            
+        return points
+
 
 cdef class SegmentQueryInfo:
     def __cinit__(self, shape, start, end, t, n):
