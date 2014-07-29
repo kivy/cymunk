@@ -47,6 +47,11 @@ cdef extern from "chipmunk/chipmunk.h":
         cpFloat stiffness
         cpFloat damping
 
+    ctypedef struct cpRotaryLimitJoint:
+        cpConstraint constraint
+        cpFloat min
+        cpFloat max
+
     ctypedef struct cpPinJoint:
         cpConstraint constraint
         cpVect anchr1
@@ -75,6 +80,8 @@ cdef extern from "chipmunk/chipmunk.h":
         cpVect anchr2, cpFloat restLength, cpFloat stiffness, cpFloat damping)
     cpConstraint* cpDampedRotarySpringNew(cpBody *a, cpBody *b,
         cpFloat restAngle, cpFloat stiffness, cpFloat damping)
+    cpConstraint* cpRotaryLimitJointNew(cpBody *a, cpBody *b,
+        cpFloat min, cpFloat max)
     cpConstraint* cpGrooveJointNew(cpBody *a, cpBody *b, cpVect groove_a, 
         cpVect groove_b, cpVect anchr2)
     cpConstraint* cpGearJointNew(cpBody *a, cpBody *b, cpFloat phase, 
@@ -122,6 +129,11 @@ cdef class DampedRotarySpring(Constraint):
     cdef float rest_angle
     cdef float stiffness
     cdef float damping
+
+cdef class RotaryLimitJoint(Constraint):
+    cdef cpRotaryLimitJoint *_rotaryLimitJoint
+    cdef float min
+    cdef float max
 
 cdef class GearJoint(Constraint):
     cdef cpGearJoint *_gearjoint

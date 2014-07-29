@@ -256,6 +256,29 @@ cdef class DampedRotarySpring(Constraint):
             self._dampedspring.damping = new_damping
 
 
+cdef class RotaryLimitJoint(Constraint):
+
+    def __init__(self, Body a, Body b, float min, float max):
+        self._constraint = cpRotaryLimitJointNew(a._body, b._body, min, max)
+        self._set_bodies(a,b)
+        self._constraint.data = <cpDataPointer><void *>self
+        self._rotaryLimitJoint = <cpRotaryLimitJoint *>self._constraint
+        global constraint_handlers
+        constraint_handlers[self] = {}
+
+    property min:
+        def __get__(self):
+            return self._rotaryLimitJoint.min
+        def __set__(self, float new_min):
+            self._rotaryLimitJoint.min = new_min
+
+    property max:
+        def __get__(self):
+            return self._rotaryLimitJoint.max
+        def __set__(self, float new_max):
+            self._rotaryLimitJoint.max = new_max
+
+
 cdef class SlideJoint(Constraint):
 
     def __init__(self, Body a, Body b, tuple anchor1, 
