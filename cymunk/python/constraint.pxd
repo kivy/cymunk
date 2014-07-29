@@ -41,6 +41,12 @@ cdef extern from "chipmunk/chipmunk.h":
         cpFloat stiffness
         cpFloat damping
 
+    ctypedef struct cpDampedRotarySpring:
+        cpConstraint constraint
+        cpFloat restAngle
+        cpFloat stiffness
+        cpFloat damping
+
     ctypedef struct cpPinJoint:
         cpConstraint constraint
         cpVect anchr1
@@ -67,6 +73,8 @@ cdef extern from "chipmunk/chipmunk.h":
         cpVect anchr2, cpFloat min, cpFloat max)
     cpConstraint* cpDampedSpringNew(cpBody *a, cpBody *b, cpVect anchr1, 
         cpVect anchr2, cpFloat restLength, cpFloat stiffness, cpFloat damping)
+    cpConstraint* cpDampedRotarySpringNew(cpBody *a, cpBody *b,
+        cpFloat restAngle, cpFloat stiffness, cpFloat damping)
     cpConstraint* cpGrooveJointNew(cpBody *a, cpBody *b, cpVect groove_a, 
         cpVect groove_b, cpVect anchr2)
     cpConstraint* cpGearJointNew(cpBody *a, cpBody *b, cpFloat phase, 
@@ -106,6 +114,12 @@ cdef class DampedSpring(Constraint):
     cdef tuple anchor1
     cdef tuple anchor2
     cdef float rest_length
+    cdef float stiffness
+    cdef float damping
+
+cdef class DampedRotarySpring(Constraint):
+    cdef cpDampedRotarySpring *_dampedspring
+    cdef float rest_angle
     cdef float stiffness
     cdef float damping
 
