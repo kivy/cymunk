@@ -29,4 +29,5 @@ constraint.GrooveJoint = GrooveJoint
 constraint.SlideJoint = SlideJoint
 constraint.DampedSpring = DampedSpring
 constraint.DampedRotarySpring = DampedRotarySpring
+constraint.RotaryLimitJoint = RotaryLimitJoint
 constraint.GearJoint = GearJoint
