@@ -226,6 +226,59 @@ cdef class DampedSpring(Constraint):
             self._dampedspring.damping = new_damping
 
 
+cdef class DampedRotarySpring(Constraint):
+
+    def __init__(self, Body a, Body b, float rest_angle, float stiffness, float damping):
+        self._constraint = cpDampedRotarySpringNew(a._body, b._body, rest_angle, stiffness,
+            damping)
+        self._set_bodies(a,b)
+        self._constraint.data = <cpDataPointer><void *>self
+        self._dampedspring = <cpDampedRotarySpring *>self._constraint
+        global constraint_handlers
+        constraint_handlers[self] = {}
+
+    property rest_angle:
+        def __get__(self):
+            return self._dampedspring.restAngle
+        def __set__(self, float new_rest_angle):
+            self._dampedspring.restAngle = new_rest_angle
+
+    property stiffness:
+        def __get__(self):
+            return self._dampedspring.stiffness
+        def __set__(self, float new_stiffness):
+            self._dampedspring.stiffness = new_stiffness
+
+    property damping:
+        def __get__(self):
+            return self._dampedspring.damping
+        def __set__(self, float new_damping):
+            self._dampedspring.damping = new_damping
+
+
+cdef class RotaryLimitJoint(Constraint):
+
+    def __init__(self, Body a, Body b, float min, float max):
+        self._constraint = cpRotaryLimitJointNew(a._body, b._body, min, max)
+        self._set_bodies(a,b)
+        self._constraint.data = <cpDataPointer><void *>self
+        self._rotaryLimitJoint = <cpRotaryLimitJoint *>self._constraint
+        global constraint_handlers
+        constraint_handlers[self] = {}
+
+    property min:
+        def __get__(self):
+            return self._rotaryLimitJoint.min
+        def __set__(self, float new_min):
+            self._rotaryLimitJoint.min = new_min
+
+    property max:
+        def __get__(self):
+            return self._rotaryLimitJoint.max
+        def __set__(self, float new_max):
+            self._rotaryLimitJoint.max = new_max
+
+
 cdef class SlideJoint(Constraint):
 
     def __init__(self, Body a, Body b, tuple anchor1, 
