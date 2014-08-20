@@ -38,6 +38,11 @@ def moment_for_box(mass, width, height):
     '''
     return cpMomentForBox(mass, width, height)
 
+def enable_segment_to_segment_collisions():
+    '''
+    Enable segment to segment collisions
+    '''
+    cpEnableSegmentToSegmentCollisions()
 
 def reset_shapeid_counter():
     '''

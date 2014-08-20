@@ -105,6 +105,7 @@ cdef extern from "chipmunk/chipmunk.h":
     cpFloat cpMomentForSegment(cpFloat m, cpVect a, cpVect b)
     cpFloat cpMomentForPoly(cpFloat m, int numVerts, cpVect *verts, cpVect offset)
     cpFloat cpMomentForBox(cpFloat m, cpFloat width, cpFloat height)
+    void cpEnableSegmentToSegmentCollisions()
     void cpResetShapeIdCounter()
 
     cpBB cpBBNew(cpFloat l, cpFloat b, cpFloat r, cpFloat t)
