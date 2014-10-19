@@ -145,9 +145,9 @@ cdef extern from "chipmunk/chipmunk.h":
     cpVect cpvperp(const cpVect v)
     cpVect cpvrperp(const cpVect v)
 
-
+include "constraint.pxd"
 include "core.pxd"
 include "body.pxd"
 include "shape.pxd"
 include "space.pxd"
-include "constraint.pxd"
+

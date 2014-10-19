@@ -287,10 +287,7 @@ cdef class BoxShape(Shape):
 
 
 cdef class Poly(Shape):
-    cdef cpVect _offset
-    cdef cpVect *_vertices
-    cdef int     _vertices_count
-    cdef tuple   offset
+
 
     def __init__(self, Body body, vertices, offset=(0, 0), auto_order_vertices=True):
         Shape.__init__(self)

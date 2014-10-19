@@ -225,11 +225,12 @@ cdef class DampedSpring(Constraint):
         def __set__(self, float new_damping):
             self._dampedspring.damping = new_damping
 
-
 cdef class DampedRotarySpring(Constraint):
 
-    def __init__(self, Body a, Body b, float rest_angle, float stiffness, float damping):
-        self._constraint = cpDampedRotarySpringNew(a._body, b._body, rest_angle, stiffness,
+    def __init__(self, Body a, Body b, float rest_angle, float stiffness, 
+        float damping):
+        self._constraint = cpDampedRotarySpringNew(a._body, b._body, 
+            rest_angle, stiffness,
             damping)
         self._set_bodies(a,b)
         self._constraint.data = <cpDataPointer><void *>self
