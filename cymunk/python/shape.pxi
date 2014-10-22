@@ -221,7 +221,7 @@ cdef class Segment(Shape):
     thickness.
     '''
 
-    cdef cpSegmentShape* _segment_shape
+    
 
     def __init__(self, Body body, a, b, cpFloat radius):
         Shape.__init__(self)
@@ -253,7 +253,9 @@ cdef class Segment(Shape):
         The thickness of the segment
         '''
         def __get__(self):
-            pass
+            return self._segment_shape.r
+        def __set__(self, r):
+            self._segment_shape.r = r
 
 # FIXME: This class is absent in Pymunk API,
 #        so it should be marked as depricated
