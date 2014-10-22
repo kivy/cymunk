@@ -172,7 +172,7 @@ cdef class Body:
         '''
         Convert world space coordinates to body local coordinates
         '''
-        return cpBodyWorld2Local(self._body, cpv(v.x, v.y))
+        return cpBodyWorld2Local(self._body, cpv(v[0], v[1]))
 
     #def apply_damped_spring(self, b, anchor1, anchor2, rlen, k, dmp, dt):
     #    cpApplyDampedSpring(self._body, b._body, anchor1, anchor2, rlen, k, dmp, dt)
