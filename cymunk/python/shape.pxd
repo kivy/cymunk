@@ -15,6 +15,11 @@ cdef class Poly(Shape):
     cdef cpVect *_vertices
     cdef int     _vertices_count
     cdef tuple   offset
+cdef class Segment(Shape):
+    cdef cpVect a
+    cdef cpVect b
+    cdef float radius
+    cdef cpSegmentShape* _segment_shape
 
 cdef extern from "chipmunk/chipmunk.h":
     ctypedef struct cpSegmentShape:
