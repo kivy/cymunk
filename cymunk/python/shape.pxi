@@ -106,6 +106,17 @@ cdef class Shape:
         def __set__(self, group):
             self._shape.group = group
 
+    property layers:
+        '''
+        Shapes only collide if they are in the same bit-planes.
+        i.e. (a.layers & b.layers) != 0.
+        By default, a shape occupies all 32 bit-planes, i.e. layers == -1
+        '''
+        def __get__(self):
+            return self._shape.layers
+        def __set__(self, layers):
+            self._shape.layers = layers
+
     property elasticity:
         '''
         Elasticity of the shape. A value of 0.0 gives no bounce, while a value

@@ -72,6 +72,8 @@ cdef extern from "chipmunk/chipmunk.h":
         cpCollisionType collision_type
         # Group of this shape. Shapes in the same group don't collide
         cpGroup group
+        # Layers of this shape. Shapes only collide if they are in the same bit-planes.
+        cpLayers layers
         # Hash
         cpHashValue hashid_private
 
