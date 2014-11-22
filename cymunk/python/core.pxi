@@ -75,8 +75,11 @@ def is_clockwise(points):
 
 cdef class Vec2d:
 
-    def __cinit__(self, float x, float y):
-        self.v = cpv(x, y)
+    def __cinit__(self, x, y=None):
+        if y == None:
+            self.v = cpv(x[0], x[1])
+        else:
+            self.v = cpv(x, y)
 
     property x:
         def __get__(self):
