@@ -77,7 +77,16 @@ cdef extern from "chipmunk/chipmunk.h":
         # Hash
         cpHashValue hashid_private
 
-
+    ctypedef struct cpNearestPointQueryInfo:
+        # The nearest shape, NULL if no shape was within range.
+        cpShape *shape
+        # The closest point on the shape's surface. (in world space coordinates)
+        cpVect p
+        # The distance to the point. The distance is negative if the point is inside the shape.
+        cpFloat d
+        # The gradient of the signed distance function.
+        # The same as info.p/info.d, but accurate even for very small values of info.d.
+        cpVect g
     ctypedef struct cpSegmentQueryInfo:
         # The shape that was hit, NULL if no collision occured
         cpShape *shape

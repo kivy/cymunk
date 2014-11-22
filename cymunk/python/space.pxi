@@ -522,6 +522,15 @@ cdef class Space:
         else:
             return self._shapes.get(_shape.hashid_private, None) \
                     or self._static_shapes.get(_shape.hashid_private, None)
+    def nearest_point_query_nearest(self, Vec2d point, maxdist=100, layers=1, group=0):
+        cdef cpShape* _shape
+        #cdef cpNearestPointQueryInfo* info
+        _shape = cpSpaceNearestPointQueryNearest(self._space, point.v, maxdist, layers, group, NULL)
+        if not _shape:
+            return None
+        else:
+            return self._shapes.get(_shape.hashid_private, None) \
+                    or self._static_shapes.get(_shape.hashid_private, None)
 
     cdef void _add_c_collision_handler(self, a, b):
         cpSpaceAddCollisionHandler(self._space, a, b, _call_collision_begin_func, _call_collision_pre_solve_func, _call_collision_post_solve_func, _call_collision_separate_func, <void *>self)

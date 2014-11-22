@@ -87,6 +87,7 @@ cdef extern from "chipmunk/chipmunk.h":
         cpFloat t, cpVect n, void *data)
         
     cpShape* cpSpacePointQueryFirst(cpSpace *space, cpVect point, cpLayers layers, cpGroup group)
+    cpShape* cpSpaceNearestPointQueryNearest(cpSpace *space, cpVect point, cpFloat maxDistance, cpLayers layers, cpGroup group, cpNearestPointQueryInfo *out)
     
     void cpSpaceSegmentQuery(cpSpace *space, cpVect start, 
         cpVect end, cpLayers layers, cpGroup group, 
