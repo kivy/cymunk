@@ -350,6 +350,15 @@ cdef class Vec2d:
     def __invert__(self):
         return Vec2d(-self.x, -self.y)
 
+
+    # Extra functions, mainly for chipmunk
+    def cpvrotate(self, other):
+        """Uses complex multiplication to rotate this vector by the other. """
+        return Vec2d(self.x*other.x - self.y*other.y, self.x*other.y + self.y*other.x)
+    def cpvunrotate(self, other):
+        """The inverse of cpvrotate"""
+        return Vec2d(self.x*other.x + self.y*other.y, self.y*other.x - self.x*other.y)
+
 cdef class Contact:
     '''
     Contact informations
