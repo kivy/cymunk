@@ -5,6 +5,7 @@ cdef class Shape:
 
 cdef class Circle(Shape):
     cdef float radius
+    cdef cpVect offset
 
 cdef class BoxShape(Shape):
     cdef float width

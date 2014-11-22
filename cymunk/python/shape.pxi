@@ -193,6 +193,7 @@ cdef class Circle(Shape):
         Shape.__init__(self)
         self._body = body
         self.radius = radius
+        self.offset = cpv(offset[0], offset[1])
         self._shape = cpCircleShapeNew(body._body, radius, cpv(offset[0], offset[1]))
         #self._cs = ct.cast(self._shape, ct.POINTER(cp.cpCircleShape))
 
@@ -207,6 +208,10 @@ cdef class Circle(Shape):
         Unsafe set the offset of the circle.
         '''
         cpCircleShapeSetOffset(self._shape, cpv(o.x, o.y))
+
+    property offset:
+        def __get__(self):
+            return Vec2d(self.offset.x, self.offset.y)
 
     property radius:
         def __get__(self):
