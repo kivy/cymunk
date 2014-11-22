@@ -237,7 +237,7 @@ cdef class Segment(Shape):
     def __init__(self, Body body, a, b, cpFloat radius):
         Shape.__init__(self)
         self._body = body
-        self._shape = cpSegmentShapeNew(body._body, cpv(a.x, a.y), cpv(b.x, b.y), radius)
+        self._shape = cpSegmentShapeNew(body._body, cpv(a[0], a[1]), cpv(b[0], b[1]), radius)
         self._segment_shape = <cpSegmentShape *>self._shape
 
     property a:
