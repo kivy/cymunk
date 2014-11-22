@@ -245,7 +245,7 @@ cdef class Segment(Shape):
         The first of the two endpoints for this segment
         '''
         def __get__(self):
-            return (self._segment_shape.a.x, self._segment_shape.a.y)
+            return Vec2d(self._segment_shape.a.x, self._segment_shape.a.y)
         def __set__(self, a):
             self._segment_shape.a = cpv(a[0], a[1])
 
@@ -254,7 +254,7 @@ cdef class Segment(Shape):
         The second of the two endpoints for this segment
         '''
         def __get__(self):
-            return (self._segment_shape.b.x, self._segment_shape.b.y)
+            return Vec2d(self._segment_shape.b.x, self._segment_shape.b.y)
         def __set__(self, a):
             self._segment_shape.b = cpv(a[0], a[1])
 
