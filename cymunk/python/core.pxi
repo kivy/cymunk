@@ -508,6 +508,21 @@ cdef class Vec2d:
         """
         return self.x*other[1] - self.y*other[0]
 
+    @staticmethod
+    def zero():
+        """A vector of zero length"""
+        return Vec2d(0, 0)
+
+    @staticmethod
+    def unit():
+        """A unit vector pointing up"""
+        return Vec2d(0, 1)
+
+    @staticmethod
+    def ones():
+        """A vector where both x and y is 1"""
+        return Vec2d(1, 1)
+
 
     # Extra functions, mainly for chipmunk
     def cpvrotate(self, other):
