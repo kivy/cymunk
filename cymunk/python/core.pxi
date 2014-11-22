@@ -350,6 +350,164 @@ cdef class Vec2d:
     def __invert__(self):
         return Vec2d(-self.x, -self.y)
 
+    # vectory functions
+    def get_length_sqrd(self):
+        """Get the squared length of the vector.
+        It is more efficent to use this method instead of first call
+        get_length() or access .length and then do a sqrt().
+
+        :return: The squared length
+        """
+        return self.x**2 + self.y**2
+
+    def get_length(self):
+        """Get the length of the vector.
+
+        :return: The length
+        """
+        return math.sqrt(self.x**2 + self.y**2)
+    def __setlength(self, value):
+        length = self.get_length()
+        self.x *= value/length
+        self.y *= value/length
+    length = property(get_length, __setlength,
+        doc = """Gets or sets the magnitude of the vector""")
+
+    def rotate(self, angle_radians):
+        """Rotate the vector by angle_radians radians."""
+        cos = math.cos(angle_radians)
+        sin = math.sin(angle_radians)
+        x = self.x*cos - self.y*sin
+        y = self.x*sin + self.y*cos
+        self.x = x
+        self.y = y
+
+    def rotated(self, angle_radians):
+        """Create and return a new vector by rotating this vector by
+        angle_radians radians.
+
+        :return: Rotated vector
+        """
+        cos = math.cos(angle_radians)
+        sin = math.sin(angle_radians)
+        x = self.x*cos - self.y*sin
+        y = self.x*sin + self.y*cos
+        return Vec2d(x, y)
+
+    def rotate_degrees(self, angle_degrees):
+        """Rotate the vector by angle_degrees degrees."""
+        self.rotate(math.radians(angle_degrees))
+
+    def rotated_degrees(self, angle_degrees):
+        """Create and return a new vector by rotating this vector by
+        angle_degrees degrees.
+
+        :return: Rotade vector
+        """
+        return self.rotated(math.radians(angle_degrees))
+
+    def get_angle(self):
+        if (self.get_length_sqrd() == 0):
+            return 0
+        return math.atan2(self.y, self.x)
+    def __setangle(self, angle):
+        self.x = self.length
+        self.y = 0
+        self.rotate(angle)
+    angle = property(get_angle, __setangle,
+        doc="""Gets or sets the angle (in radians) of a vector""")
+
+    def get_angle_degrees(self):
+        return math.degrees(self.get_angle())
+    def __set_angle_degrees(self, angle_degrees):
+        self.__setangle(math.radians(angle_degrees))
+    angle_degrees = property(get_angle_degrees, __set_angle_degrees,
+        doc="""Gets or sets the angle (in degrees) of a vector""")
+
+    def get_angle_between(self, other):
+        """Get the angle between the vector and the other in radians
+
+        :return: The angle
+        """
+        cross = self.x*other[1] - self.y*other[0]
+        dot = self.x*other[0] + self.y*other[1]
+        return math.atan2(cross, dot)
+
+    def get_angle_degrees_between(self, other):
+        """Get the angle between the vector and the other in degrees
+
+        :return: The angle (in degrees)
+        """
+        return math.degrees(self.get_angle_between(other))
+
+    def normalized(self):
+        """Get a normalized copy of the vector
+        Note: This function will return 0 if the length of the vector is 0.
+
+        :return: A normalized vector
+        """
+        length = self.length
+        if length != 0:
+            return self/length
+        return Vec2d(self)
+
+    def normalize_return_length(self):
+        """Normalize the vector and return its length before the normalization
+
+        :return: The length before the normalization
+        """
+        length = self.length
+        if length != 0:
+            self.x /= length
+            self.y /= length
+        return length
+
+    def perpendicular(self):
+        return Vec2d(-self.y, self.x)
+
+    def perpendicular_normal(self):
+        length = self.length
+        if length != 0:
+            return Vec2d(-self.y/length, self.x/length)
+        return Vec2d(self)
+
+    def dot(self, other):
+        """The dot product between the vector and other vector
+            v1.dot(v2) -> v1.x*v2.x + v1.y*v2.y
+
+        :return: The dot product
+        """
+        return float(self.x*other[0] + self.y*other[1])
+
+    def get_distance(self, other):
+        """The distance between the vector and other vector
+
+        :return: The distance
+        """
+        return math.sqrt((self.x - other[0])**2 + (self.y - other[1])**2)
+
+    def get_dist_sqrd(self, other):
+        """The squared distance between the vector and other vector
+        It is more efficent to use this method than to call get_distance()
+        first and then do a sqrt() on the result.
+
+        :return: The squared distance
+        """
+        return (self.x - other[0])**2 + (self.y - other[1])**2
+
+    def projection(self, other):
+        other_length_sqrd = other[0]*other[0] + other[1]*other[1]
+        projected_length_times_other_length = self.dot(other)
+        return other*(projected_length_times_other_length/other_length_sqrd)
+
+    def cross(self, other):
+        """The cross product between the vector and other vector
+            v1.cross(v2) -> v1.x*v2.y - v2.y*v1.x
+
+        :return: The cross product
+        """
+        return self.x*other[1] - self.y*other[0]
+
 
     # Extra functions, mainly for chipmunk
     def cpvrotate(self, other):
