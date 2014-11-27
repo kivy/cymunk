@@ -1,3 +1,4 @@
+import sys
 from os import environ
 from os.path import dirname, join
 from distutils.core import setup
@@ -8,6 +9,12 @@ try:
 except ImportError:
     have_cython = False
 
+
+platform = sys.platform
+if platform == 'win32':
+	cstdarg = '-std=gnu99'
+else:
+	cstdarg = '-std=c99'
 c_chipmunk_root = join(dirname(__file__), 'cymunk', 'Chipmunk-Physics')
 c_chipmunk_src = join(c_chipmunk_root, 'src')
 c_chipmunk_incs = [join(c_chipmunk_root, 'include'),
@@ -41,7 +48,7 @@ else:
 ext = Extension('cymunk',
     cymunk_files + c_chipmunk_files,
     include_dirs=c_chipmunk_incs,
-    extra_compile_args=['-std=c99', '-ffast-math', '-fPIC', '-DCHIPMUNK_FFI'])
+    extra_compile_args=[cstdarg, '-ffast-math', '-fPIC', '-DCHIPMUNK_FFI'])
  
 
 if environ.get('READTHEDOCS', None) == 'True':
