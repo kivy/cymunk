@@ -563,3 +563,6 @@ cdef class Space:
             _collision_seperate_func,
             <PyObject *>self)
 
+    def UseSpatialHash(self, cpFloat dim, int count):
+        cpSpaceUseSpatialHash(self._space, dim, count)
+
