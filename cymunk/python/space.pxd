@@ -131,4 +131,6 @@ cdef extern from "chipmunk/chipmunk.h":
             cpCollisionSeparateFunc separate,
             void *data
     )
+    # Switch the space to use a spatial has as it's spatial index.
+    void cpSpaceUseSpatialHash(cpSpace *space, cpFloat dim, int count)
 
