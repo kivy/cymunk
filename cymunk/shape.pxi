@@ -115,7 +115,7 @@ cdef class Shape:
         def __get__(self):
             return self._shape.layers
         def __set__(self, layers):
-            self._shape.layers = layers
+            self._shape.layers = layers % 4294967296
 
     property elasticity:
         '''
