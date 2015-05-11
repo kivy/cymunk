@@ -26,26 +26,23 @@ c_chipmunk_files = [join(c_chipmunk_src, x) for x in (
 
 if have_cython:
     cymunk_files = [
-        'cymunk/python/constraint.pxi',
-        'cymunk/python/core.pxi',
-        'cymunk/python/space.pxi',
-        'cymunk/python/shape.pxi',
-        'cymunk/python/body.pxi',
-        'cymunk/python/cymunk.pyx'
+        'cymunk/constraint.pxi',
+        'cymunk/core.pxi',
+        'cymunk/space.pxi',
+        'cymunk/shape.pxi',
+        'cymunk/body.pxi',
+        'cymunk/cymunk.pyx'
         ]
     cmdclass = {'build_ext': build_ext}
 else:
-    cymunk_files = ['cymunk/python/cymunk.c']
+    cymunk_files = ['cymunk/cymunk.c']
     cmdclass = {}
 
-ext = Extension('cymunk',
+ext = Extension('cymunk/cymunk',
     cymunk_files + c_chipmunk_files,
     include_dirs=c_chipmunk_incs,
     extra_compile_args=['-std=c99', '-ffast-math', '-fPIC', '-DCHIPMUNK_FFI'])
  
-
-if environ.get('READTHEDOCS', None) == 'True':
-    ext.pyrex_directives = {'embedsignature': True}
 
 setup(
     name='cymunk',
@@ -53,4 +50,7 @@ setup(
     author='Mathieu Virbel and Nicolas Niemczycki',
     author_email='mat@kivy.org',
     cmdclass=cmdclass,
+    packages=['cymunk'],
+    package_data={'cymunk': ['*.pxd', '*.pxi']},
+    package_dir={'cymunk': 'cymunk'},
     ext_modules=[ext])
