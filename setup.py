@@ -45,7 +45,7 @@ else:
     cymunk_files = ['cymunk/cymunk.c']
     cmdclass = {}
 
-ext = Extension('cymunk/cymunk',
+ext = Extension('cymunk.cymunk',
     cymunk_files + c_chipmunk_files,
     include_dirs=c_chipmunk_incs,
     extra_compile_args=[cstdarg, '-ffast-math', '-fPIC', '-DCHIPMUNK_FFI'])
