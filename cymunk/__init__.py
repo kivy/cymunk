@@ -1,1 +1,1 @@
-from cymunk import *
+from cymunk.cymunk import *
