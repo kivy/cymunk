@@ -206,6 +206,7 @@ cdef class Space:
         self._space.iterations = iterations
         self._static_body = Body()
         self._static_body._body = self._space.staticBody
+        self._static_body.automanaged = 0
         self._handlers = {}
         self._default_handlers = None
         self._post_step_callbacks = {}
