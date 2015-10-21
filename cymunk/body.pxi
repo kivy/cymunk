@@ -42,6 +42,10 @@ cdef class Body:
         def __set__(self, moment):
             cpBodySetMoment(self._body, moment)
 
+    property speed:
+        def __get__(self):
+            return cpvlength(self._body.v)
+
     property angle:
         '''
         The rotation of the body
