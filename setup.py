@@ -58,6 +58,7 @@ setup(
     author_email='mat@kivy.org',
     cmdclass=cmdclass,
     packages=['cymunk'],
-    package_data={'cymunk': ['*.pxd', '*.pxi']},
+    package_data={'cymunk': ['*.pxd', '*.pxi', 'chipmunk/*.h',
+        'chipmunk/constraints/*.h']},
     package_dir={'cymunk': 'cymunk'},
     ext_modules=[ext])
