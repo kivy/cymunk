@@ -1,24 +1,18 @@
 import sys
-from os import environ
 from os.path import dirname, join
-from distutils.core import setup
-from distutils.extension import Extension
-try:
-    from Cython.Distutils import build_ext
-    have_cython = True
-except ImportError:
-    have_cython = False
+from setuptools import setup, find_packages, Extension
 
-
-platform = sys.platform
-if platform == 'win32':
-	cstdarg = '-std=gnu99'
+if sys.platform == 'win32':
+    compile_args = ['-std=gnu99', '-ffast-math', '-fPIC', '-DCHIPMUNK_FFI']
+    libraries = ['opengl32', 'glu32','glew32']
 else:
-	cstdarg = '-std=c99'
+    compile_args = ['-std=c99', '-ffast-math', '-fPIC', '-DCHIPMUNK_FFI', '-w']
+    libraries = []
+
 c_chipmunk_root = join(dirname(__file__), 'cymunk', 'Chipmunk-Physics')
 c_chipmunk_src = join(c_chipmunk_root, 'src')
 c_chipmunk_incs = [join(c_chipmunk_root, 'include'),
-        join(c_chipmunk_root, 'include', 'chipmunk')]
+                   join(c_chipmunk_root, 'include', 'chipmunk')]
 c_chipmunk_files = [join(c_chipmunk_src, x) for x in (
     'cpSpatialIndex.c', 'cpSpaceHash.c', 'constraints/cpPivotJoint.c',
     'constraints/cpConstraint.c', 'constraints/cpSlideJoint.c',
@@ -31,34 +25,26 @@ c_chipmunk_files = [join(c_chipmunk_src, x) for x in (
     'cpVect.c', 'cpPolyShape.c', 'cpSpaceComponent.c', 'cpBody.c',
     'cpHashSet.c')]
 
-if have_cython:
-    cymunk_files = [
-        'cymunk/constraint.pxi',
-        'cymunk/core.pxi',
-        'cymunk/space.pxi',
-        'cymunk/shape.pxi',
-        'cymunk/body.pxi',
-        'cymunk/cymunk.pyx'
-        ]
-    cmdclass = {'build_ext': build_ext}
-else:
-    cymunk_files = ['cymunk/cymunk.c']
-    cmdclass = {}
-
-ext = Extension('cymunk.cymunk',
-    cymunk_files + c_chipmunk_files,
-    include_dirs=c_chipmunk_incs,
-    extra_compile_args=[cstdarg, '-ffast-math', '-fPIC', '-DCHIPMUNK_FFI'])
- 
-
 setup(
     name='cymunk',
     description='Cython bindings for Chipmunk',
     author='Mathieu Virbel and Nicolas Niemczycki',
     author_email='mat@kivy.org',
-    cmdclass=cmdclass,
-    packages=['cymunk'],
-    package_data={'cymunk': ['*.pxd', '*.pxi', 'chipmunk/*.h',
-        'chipmunk/constraints/*.h']},
-    package_dir={'cymunk': 'cymunk'},
-    ext_modules=[ext])
+    packages=find_packages(),
+    package_data={
+        '': ['*.pxd', '*.so', '*.pxi', 'chipmunk/*.h', 'chipmunk/constraints/*.h']
+    },
+    setup_requires=['cython', 'setuptools.autocythonize'],
+    auto_cythonize={
+        "compile_args": compile_args,
+        "libraries": libraries,
+        "includes": c_chipmunk_incs,
+        "extra_sources": c_chipmunk_files
+    }
+)
+
+'''
+
+'''
+
+

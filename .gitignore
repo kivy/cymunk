@@ -4,3 +4,4 @@ cymunk/python/cymunk.c
 *.so
 build
 docs/_build
+.eggs
