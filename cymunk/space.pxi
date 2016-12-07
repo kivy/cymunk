@@ -475,8 +475,8 @@ cdef class Space:
         the collisions in the usual case.
         '''
         cpSpaceStep(self._space, dt)
-        for key in self._post_step_callbacks:
-            self._post_step_callbacks[key](self)  
+        for _, callback in self._post_step_callbacks.items():
+            callback(self)
         self._post_step_callbacks = {}
 
     def register_bb_query_func(self, func):
