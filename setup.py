@@ -1,8 +1,15 @@
 import sys
 from os import environ
 from os.path import dirname, join
-from distutils.core import setup
-from distutils.extension import Extension
+
+if environ.get('CYMUNK_USE_SETUPTOOLS'):
+    from setuptools import setup, Extension
+    print('Using setuptools')
+else:
+    from distutils.core import setup
+    from distutils.extension import Extension
+    print('Using distutils')
+
 try:
     from Cython.Distutils import build_ext
     have_cython = True
@@ -61,4 +68,6 @@ setup(
     package_data={'cymunk': ['*.pxd', '*.pxi', 'chipmunk/*.h',
         'chipmunk/constraints/*.h']},
     package_dir={'cymunk': 'cymunk'},
-    ext_modules=[ext])
+    ext_modules=[ext],
+    version='0.0.0.dev0'
+)
