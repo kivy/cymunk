@@ -668,7 +668,7 @@ cdef class Arbiter:
                         Vec2d(point.x, point.y),
                         Vec2d(normal.x, normal.y),
                         cpArbiterGetDepth(self._arbiter, i)))
-                return self._contacts
+            return self._contacts
 
     property shapes:
         '''
