@@ -347,7 +347,36 @@ cdef class Space:
             return self._space.enableContactGraph
         def __set__(self, enable_contact_graph):
             self._space.enableContactGraph = enable_contact_graph
-
+            
+    property contacts:
+        '''
+        All contacts of the currently active arbiters.
+        Mainly useful to draw the contacts.
+        '''
+        def __get__(self):
+            if self._space.arbiters_private == NULL:
+                return []
+            cdef list ret = []
+            cdef cpArray *arr = self._space.arbiters_private
+            cdef unsigned int i, j, n = arr[0].num
+            cdef cpArbiter **data = <cpArbiter**>arr[0].arr
+            cdef cpArbiter *cp_arbiter
+            cdef cpContactPointSet point_set
+            cdef cpVect point, normal
+            for i in range(n):
+                cp_arbiter = data[i]
+                # just to be sure
+                if cp_arbiter == NULL:
+                    continue
+                point_set = cpArbiterGetContactPointSet(cp_arbiter)
+                for j in range(point_set.count):
+                    point = cpArbiterGetPoint(cp_arbiter, j)
+                    normal = cpArbiterGetNormal(cp_arbiter, j)
+                    ret.append(Contact(
+                        Vec2d(point.x, point.y),
+                        Vec2d(normal.x, normal.y),
+                        cpArbiterGetDepth(cp_arbiter, j)))
+            return ret
 
     def add(self, *objs):
         '''
@@ -566,4 +595,3 @@ cdef class Space:
 
     def UseSpatialHash(self, cpFloat dim, int count):
         cpSpaceUseSpatialHash(self._space, dim, count)
-
