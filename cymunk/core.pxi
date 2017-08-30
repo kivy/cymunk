@@ -112,47 +112,22 @@ cdef class Vec2d:
         else:
             raise IndexError('Invalid index %r, must be 0 or 1' % index)
 
+    def __len__(self):
+        return 2
+
     def __repr__(self):
         return '<cymunk.Vec2d x=%f y=%f>' % (self.v.x, self.v.y)
-    
-    def rotate(self, angle_radians):
-        """Rotate the vector by angle_radians radians."""
-        cdef float x
-        cdef float y
-        
-        cos = math.cos(angle_radians)
-        sin = math.sin(angle_radians)
-        x = self.v.x*cos - self.v.y*sin
-        y = self.v.x*sin + self.v.y*cos
-        self.v.x = x
-        self.v.y = y
-
-    def rotated(self, angle_radians):
-        """Create and return a new vector by rotating this vector by
-        angle_radians radians.
-
-        :return: Rotated vector
-        """
-        cdef float x
-        cdef float y
-        cos = math.cos(angle_radians)
-        sin = math.sin(angle_radians)
-        x = self.x*cos - self.y*sin
-        y = self.x*sin + self.y*cos
-        return Vec2d(x, y)
 
     # Comparison
-    '''def __eq__(self, other):
+    def __richcmp__(self, other, int op):
+        if op != 2 and op != 3:
+            raise NotImplementedError()
+        val = False
         if hasattr(other, "__getitem__") and len(other) == 2:
-            return self.x == other[0] and self.y == other[1]
-        else:
-            return False
-
-    def __ne__(self, other):
-        if hasattr(other, "__getitem__") and len(other) == 2:
-            return self.x != other[0] or self.y != other[1]
-        else:
-            return True'''
+            val = self.x == other[0] and self.y == other[1]
+        if op == 3:
+            return not val
+        return val
 
     def __nonzero__(self):
         return self.x != 0.0 or self.y != 0.0
@@ -172,9 +147,9 @@ cdef class Vec2d:
 
     def _r_o2(self, other, f):
         "Any two-operator operation where the right operand is a Vec2d"
-        if (hasattr(other, "__getitem__")) and not isinstance(other, Vec2d):
-            return (f(other[0], self.x),
-                         f(other[1], self.y))
+        if isinstance(other, Vec2d):
+            return Vec2d(f(other.x, self.x),
+                         f(other.y, self.y))
         elif (hasattr(other, "__getitem__")):
             return Vec2d(f(other[0], self.x),
                          f(other[1], self.y))
@@ -194,16 +169,10 @@ cdef class Vec2d:
 
     # Addition
     def __add__(self, other):
-        if isinstance(other, Vec2d):
-            if isinstance(self, Vec2d):
-                return Vec2d(self.x + other.x, self.y + other.y)
-            else:
-                return (self[0] + other.x, self[1] + other.y)
-        elif hasattr(other, "__getitem__"):
-            return Vec2d(self.x + other[0], self.y + other[1])
+        if isinstance(self, Vec2d):
+            return self._o2(other, operator.add)
         else:
-            return Vec2d(self.x + other, self.y + other)
-    __radd__ = __add__
+            return other._r_o2(self, operator.add)
 
     def __iadd__(self, other):
         if isinstance(other, Vec2d):
@@ -219,22 +188,11 @@ cdef class Vec2d:
 
     # Subtraction
     def __sub__(self, other):
-        if isinstance(other, Vec2d):
-            if isinstance(self, Vec2d):
-                return Vec2d(self.x - other.x, self.y - other.y)
-            else:
-                return (self[0] - other.x, self[1] - other.y)
-        elif (hasattr(other, "__getitem__")):
-            return Vec2d(self.x - other[0], self.y - other[1])
+        if isinstance(self, Vec2d):
+            return self._o2(other, operator.sub)
         else:
-            return Vec2d(self.x - other, self.y - other)
-    def __rsub__(self, other):
-        if isinstance(other, Vec2d):
-            return Vec2d(other.x - self.x, other.y - self.y)
-        if (hasattr(other, "__getitem__")):
-            return Vec2d(other[0] - self.x, other[1] - self.y)
-        else:
-            return Vec2d(other - self.x, other - self.y)
+            return other._r_o2(self, operator.sub)
+
     def __isub__(self, other):
         if isinstance(other, Vec2d):
             self.x -= other.x
@@ -249,16 +207,10 @@ cdef class Vec2d:
 
     # Multiplication
     def __mul__(self, other):
-        if isinstance(other, Vec2d):
-            if isinstance(self, Vec2d):
-                return Vec2d(self.x * other.x, self.y * other.y)
-            else:
-                return (self[0] * other.x, self[1] * other.y)
-        if (hasattr(other, "__getitem__")):
-            return Vec2d(self.x*other[0], self.y*other[1])
+        if isinstance(self, Vec2d):
+            return self._o2(other, operator.mul)
         else:
-            return Vec2d(self.x*other, self.y*other)
-    __rmul__ = __mul__
+            return other._r_o2(self, operator.mul)
 
     def __imul__(self, other):
         if isinstance(other, Vec2d):
@@ -274,68 +226,47 @@ cdef class Vec2d:
 
     # Division
     def __div__(self, other):
-        if isinstance(other, Vec2d):
-            if isinstance(self, tuple):
-                return (self[0] / other.x, self[1] / other.y)
-        return self._o2(other, operator.div)
-    def __rdiv__(self, other):
-        return self._r_o2(other, operator.div)
+        if isinstance(self, Vec2d):
+            return self._o2(other, operator.div)
+        else:
+            return other._r_o2(self, operator.div)
+
     def __idiv__(self, other):
         return self._io(other, operator.div)
 
     def __floordiv__(self, other):
-        return self._o2(other, operator.floordiv)
-    def __rfloordiv__(self, other):
-        return self._r_o2(other, operator.floordiv)
+        if isinstance(self, Vec2d):
+            return self._o2(other, operator.floordiv)
+        else:
+            return other._r_o2(self, operator.floordiv)
+
     def __ifloordiv__(self, other):
         return self._io(other, operator.floordiv)
 
     def __truediv__(self, other):
-        return self._o2(other, operator.truediv)
-    def __rtruediv__(self, other):
-        return self._r_o2(other, operator.truediv)
+        if isinstance(self, Vec2d):
+            return self._o2(other, operator.truediv)
+        else:
+            return other._r_o2(self, operator.truediv)
+
     def __itruediv__(self, other):
         return self._io(other, operator.truediv)
 
     # Modulo
     def __mod__(self, other):
-        return self._o2(other, operator.mod)
-    def __rmod__(self, other):
-        return self._r_o2(other, operator.mod)
-
-    def __divmod__(self, other):
-        return self._o2(other, divmod)
-    def __rdivmod__(self, other):
-        return self._r_o2(other, divmod)
+        if isinstance(self, Vec2d):
+            return self._o2(other, operator.mod)
+        else:
+            return other._r_o2(self, operator.mod)
+        
+    def __imod__(self, other):
+        return self._io(other, operator.mod)
 
     # Exponentation
     #def __pow__(self, other):
     #    return self._o2(other, operator.pow)
     #def __rpow__(self, other):
     #    return self._r_o2(other, operator.pow)
-
-    # Bitwise operators
-    def __lshift__(self, other):
-        return self._o2(other, operator.lshift)
-    def __rlshift__(self, other):
-        return self._r_o2(other, operator.lshift)
-
-    def __rshift__(self, other):
-        return self._o2(other, operator.rshift)
-    def __rrshift__(self, other):
-        return self._r_o2(other, operator.rshift)
-
-    def __and__(self, other):
-        return self._o2(other, operator.and_)
-    __rand__ = __and__
-
-    def __or__(self, other):
-        return self._o2(other, operator.or_)
-    __ror__ = __or__
-
-    def __xor__(self, other):
-        return self._o2(other, operator.xor)
-    __rxor__ = __xor__
 
     # Unary operations
     def __neg__(self):
@@ -375,12 +306,14 @@ cdef class Vec2d:
 
     def rotate(self, angle_radians):
         """Rotate the vector by angle_radians radians."""
+        cdef float x
+        cdef float y
         cos = math.cos(angle_radians)
         sin = math.sin(angle_radians)
-        x = self.x*cos - self.y*sin
-        y = self.x*sin + self.y*cos
-        self.x = x
-        self.y = y
+        x = self.v.x*cos - self.v.y*sin
+        y = self.v.x*sin + self.v.y*cos
+        self.v.x = x
+        self.v.y = y
 
     def rotated(self, angle_radians):
         """Create and return a new vector by rotating this vector by
@@ -388,10 +321,12 @@ cdef class Vec2d:
 
         :return: Rotated vector
         """
+        cdef float x
+        cdef float y
         cos = math.cos(angle_radians)
         sin = math.sin(angle_radians)
-        x = self.x*cos - self.y*sin
-        y = self.x*sin + self.y*cos
+        x = self.v.x*cos - self.v.y*sin
+        y = self.v.x*sin + self.v.y*cos
         return Vec2d(x, y)
 
     def rotate_degrees(self, angle_degrees):
