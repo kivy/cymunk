@@ -7,15 +7,16 @@ cdef class Circle(Shape):
     cdef float radius
     cdef cpVect offset
 
-cdef class BoxShape(Shape):
-    cdef float width
-    cdef float height
-
 cdef class Poly(Shape):
     cdef cpVect _offset
     cdef cpVect *_vertices
     cdef int     _vertices_count
     cdef tuple   offset
+
+cdef class BoxShape(Poly):
+    cdef float width
+    cdef float height
+
 cdef class Segment(Shape):
     cdef cpVect a
     cdef cpVect b

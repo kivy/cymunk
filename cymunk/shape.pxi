@@ -132,6 +132,30 @@ cdef class Shape:
         '''
         Friction coefficient. pymunk uses the Coulomb friction model, a value of
         0.0 is frictionless.
+
+        A value over 1.0 is perfectly fine.
+        Some real world example values from Wikipedia (Remember that
+        it is what looks good that is important, not the exact value).
+        ==============  ======  ========
+        Material        Other   Friction
+        ==============  ======  ========
+        Aluminium       Steel   0.61
+        Copper          Steel   0.53
+        Brass           Steel   0.51
+        Cast iron       Copper  1.05
+        Cast iron       Zinc    0.85
+        Concrete (wet)  Rubber  0.30
+        Concrete (dry)  Rubber  1.0
+        Concrete        Wood    0.62
+        Copper          Glass   0.68
+        Glass           Glass   0.94
+        Metal           Wood    0.5
+        Polyethene      Steel   0.2
+        Steel           Steel   0.80
+        Steel           Teflon  0.04
+        Teflon (PTFE)   Teflon  0.04
+        Wood            Wood    0.4
+        ==============  ======  ========
         '''
         def __get__(self):
             return self._shape.u
@@ -281,14 +305,14 @@ cdef class Segment(Shape):
 #   more interested in producing a wrapper of chipmunk2d than 
 #   compatibility with pymunk. -Kovak
 
-cdef class BoxShape(Shape):
+cdef class BoxShape(Poly):
 
-    def __init__(self, Body body, width, height):
-        Shape.__init__(self)
-        self._body = body
+    def __init__(self, Body body, width, height, offset=(0,0)):
+        cdef float x = width  * 0.5
+        cdef float y = height * 0.5
+        Poly.__init__(self, body, ((-x, -y), (-x, y), (x, y), (x, -y)), offset)
         self.width = width
         self.height = height
-        self._shape = cpBoxShapeNew(body._body, width, height)
 
     property width:
 
@@ -352,10 +376,14 @@ cdef class Poly(Shape):
     #    return points
 
     @staticmethod
-    def create_box(body, size=(10, 10), offset=(0, 0), radius=0):
+    def create_box(body, size=(10, 10), offset=(0, 0)):
         x, y = size[0] * .5, size[1] * .5
         vs = [(-x, -y), (-x, y), (x, y), (x, -y)]
-        return Poly(body, vs)
+        return Poly(body, vs, offset)
+
+    property offset:
+        def __get__(self):
+            return Vec2d(self._offset.x, self._offset.y)
 
     def get_vertices(self): 
         """Get the vertices in world coordinates for the polygon
