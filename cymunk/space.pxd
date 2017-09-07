@@ -13,6 +13,12 @@ cdef class Space:
     cdef object _get_shape(self, cpShape *_shape)
     cdef void _add_c_collision_handler(self, a, b)
 
+# Located in chipmunk/chipmunk_private.h but importing from that would
+# define CP_ALLOW_PRIVATE_ACCESS with 1 which would screw stuff up.
+cdef struct cpArray:
+    int num, max
+    void **arr
+
 cdef extern from "chipmunk/chipmunk.h":
     ctypedef unsigned int cpTimestamp
 
@@ -39,6 +45,8 @@ cdef extern from "chipmunk/chipmunk.h":
         cpDataPointer data
         # The designated static body for this space
         cpBody *staticBody
+        # Currently active arbiters (internal used for contacts property)
+        cpArray *arbiters_private
 
     cdef cpSpace* cpSpaceAlloc()
     cdef cpSpace* cpSpaceInit(cpSpace *space)
