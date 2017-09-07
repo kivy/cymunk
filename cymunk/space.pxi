@@ -504,8 +504,8 @@ cdef class Space:
         the collisions in the usual case.
         '''
         cpSpaceStep(self._space, dt)
-        for obj, (func, args, kwargs) in self._post_step_callbacks.items():
-            func(obj, *args, **kwargs)
+        for _, callback in self._post_step_callbacks.items():
+            callback(self)
         self._post_step_callbacks = {}
 
     def register_bb_query_func(self, func):
@@ -595,3 +595,13 @@ cdef class Space:
 
     def UseSpatialHash(self, cpFloat dim, int count):
         cpSpaceUseSpatialHash(self._space, dim, count)
+
+    def add_post_step_callback(self, callback_function, key, *args, **kwargs):
+        if key in self._post_step_callbacks:
+            return False
+
+        def f(x):
+            callback_function(self, key, *args, **kwargs)
+
+        self._post_step_callbacks[key] = f
+        return True
