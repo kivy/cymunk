@@ -1,20 +1,19 @@
 ctypedef int bool
-ctypedef int datapointer
-
+from libc.stdint cimport uint64_t, uint32_t, uintptr_t, int32_t
 
 cdef extern from "chipmunk/chipmunk.h":
     cdef void cpInitChipmunk()
 
-    ctypedef unsigned long long cpHashValue
-    ctypedef float cpFloat
+    ctypedef uintptr_t cpHashValue
+    ctypedef double cpFloat
     cpFloat INFINITY
     ctypedef struct cpVect:
         cpFloat x,y
-    ctypedef datapointer cpDataPointer
+    ctypedef uintptr_t cpDataPointer
     ctypedef bool cpBool
-    ctypedef int cpGroup
-    ctypedef int cpLayers
-    ctypedef int cpCollisionType
+    ctypedef uint64_t cpGroup
+    ctypedef uint64_t cpLayers
+    ctypedef uint64_t cpCollisionType
     ctypedef struct cpBB:
         cpFloat l, b, r ,t
     cpVect cpv (cpFloat x, cpFloat y)

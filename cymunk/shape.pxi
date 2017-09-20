@@ -327,7 +327,6 @@ cdef class BoxShape(Poly):
         def __set__(self, height):
             self.height = height
 
-
 cdef class Poly(Shape):
 
 
@@ -350,9 +349,9 @@ cdef class Poly(Shape):
         self._vertices = <cpVect *>malloc(sizeof(cpVect) * self._vertices_count)
         for i, vertex in i_vs:
             self._vertices[i] = cpv(vertex[0], vertex[1])
-
         self._shape = cpPolyShapeNew(body._body, len(vertices), self._vertices,
                 self._offset)
+        
 
     def __dealloc__(self):
         if self._vertices != NULL:

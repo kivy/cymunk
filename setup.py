@@ -1,6 +1,6 @@
 import sys
 from os import environ
-from os.path import dirname, join
+from os.path import dirname, join, isfile
 
 if environ.get('CYMUNK_USE_SETUPTOOLS'):
     from setuptools import setup, Extension
@@ -16,16 +16,17 @@ try:
 except ImportError:
     have_cython = False
 
-
 platform = sys.platform
 if platform == 'win32':
-	cstdarg = '-std=gnu99'
+    cstdarg = '-std=gnu99'
 else:
-	cstdarg = '-std=c99'
+    cstdarg = '-std=c99'
 c_chipmunk_root = join(dirname(__file__), 'cymunk', 'Chipmunk-Physics')
 c_chipmunk_src = join(c_chipmunk_root, 'src')
 c_chipmunk_incs = [join(c_chipmunk_root, 'include'),
-        join(c_chipmunk_root, 'include', 'chipmunk')]
+        join(dirname(__file__), 'cymunk'),
+        join(dirname(__file__), 'cymunk', 'chipmunk'),
+        ]
 c_chipmunk_files = [join(c_chipmunk_src, x) for x in (
     'cpSpatialIndex.c', 'cpSpaceHash.c', 'constraints/cpPivotJoint.c',
     'constraints/cpConstraint.c', 'constraints/cpSlideJoint.c',
@@ -38,6 +39,31 @@ c_chipmunk_files = [join(c_chipmunk_src, x) for x in (
     'cpVect.c', 'cpPolyShape.c', 'cpSpaceComponent.c', 'cpBody.c',
     'cpHashSet.c')]
 
+
+c_defines = {
+    'CP_LAYERS_TYPE':           'uint32_t',
+    'CP_GROUP_TYPE':            'uint32_t',
+    'CP_COLLISION_TYPE_TYPE':   'uint32_t',
+    'CHIPMUNK_FFI':             1
+    }
+
+# Bake our defines into the code.
+_defines = "#ifndef CONFIG_H_\n#define CONFIG_H_\n"
+_defines += "\n".join('#define %s %s' % kv for kv in c_defines.iteritems())
+_defines += "\n#endif /* CONFIG_H */"
+# Check for changes to avoid rebuilding the code if not required.
+need_config_rebuild = True
+_config_path = join(dirname(__file__), 'cymunk', 'config.h')
+if isfile(_config_path):
+    with open(_config_path, 'rb') as fd:
+        old = fd.read()
+    if _defines == old:
+        need_config_rebuild = False
+if need_config_rebuild:        
+    print('Generating config.h')
+    with open(_config_path, 'w') as fd:
+        fd.write(_defines)
+
 if have_cython:
     cymunk_files = [
         'cymunk/constraint.pxi',
@@ -45,7 +71,7 @@ if have_cython:
         'cymunk/space.pxi',
         'cymunk/shape.pxi',
         'cymunk/body.pxi',
-        'cymunk/cymunk.pyx'
+        'cymunk/cymunk.pyx',
         ]
     cmdclass = {'build_ext': build_ext}
 else:
@@ -55,7 +81,8 @@ else:
 ext = Extension('cymunk.cymunk',
     cymunk_files + c_chipmunk_files,
     include_dirs=c_chipmunk_incs,
-    extra_compile_args=[cstdarg, '-ffast-math', '-fPIC', '-DCHIPMUNK_FFI'])
+    extra_compile_args=[cstdarg, '-ffast-math', '-fPIC'],
+    depends=['cymunk/config.h'])
  
 
 setup(
@@ -65,8 +92,9 @@ setup(
     author_email='mat@kivy.org',
     cmdclass=cmdclass,
     packages=['cymunk'],
-    package_data={'cymunk': ['*.pxd', '*.pxi', 'chipmunk/*.h',
+    package_data={'cymunk': ['config.h', '*.pxd', '*.pxi', 'chipmunk/*.h',
         'chipmunk/constraints/*.h']},
+    #data_files=[('cymunk/chipmunk', 'cymunk/Chipmunk-Physics/include/chipmunk/*')],
     package_dir={'cymunk': 'cymunk'},
     ext_modules=[ext],
     version='0.0.0.dev0'
