@@ -4,13 +4,9 @@
 // This file should only be included in chipmunk.c
 
 #ifdef _MSC_VER
- #if _MSC_VER >= 1600
-  #define MAKE_REF(name) decltype(name) *_##name = name
- #else
-  #define MAKE_REF(name)
- #endif
+    #define MAKE_REF(name)
 #else
- #define MAKE_REF(name) __typeof__(name) *_##name = name
+    #define MAKE_REF(name) __typeof__(name) *_##name = name
 #endif
 
 #define MAKE_PROPERTIES_REF(struct, property) \
