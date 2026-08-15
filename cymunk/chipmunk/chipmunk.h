@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#ifdef __WIN32__
+#ifdef _WIN32
 // For alloca().
 	#include <malloc.h>
 #else
@@ -172,9 +172,10 @@ cpFloat cpMomentForBox2(cpFloat m, cpBB box);
 /// @c tol is the allowed amount to shrink the hull when simplifying it. A tolerance of 0.0 creates an exact hull.
 int cpConvexHull(int count, cpVect *verts, cpVect *result, int *first, cpFloat tol);
 
-#ifdef _MSC_VER
-#include "malloc.h"
-#include "alloca.h"
+#ifdef _WIN32
+    #include <malloc.h>
+#else
+    #include <alloca.h>
 #endif
 
 /// Convenience macro to work with cpConvexHull.
