@@ -47,10 +47,15 @@ else:
     cymunk_files = ['cymunk/cymunk.c']
     cmdclass = {}
 
+extra_compile_args = [cstdarg, '-ffast-math', '-fPIC', '-DCHIPMUNK_FFI']
+
+if platform == "darwin":
+    extra_compile_args += ['-Wno-implicit-function-declaration', '-Wno-incompatible-function-pointer-types']
+
 ext = Extension('cymunk.cymunk',
     cymunk_files + c_chipmunk_files,
     include_dirs=c_chipmunk_incs,
-    extra_compile_args=[cstdarg, '-ffast-math', '-fPIC', '-DCHIPMUNK_FFI'])
+    extra_compile_args=extra_compile_args)
  
 
 setup(
