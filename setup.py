@@ -1,27 +1,9 @@
 import sys
-from os import environ
-from os.path import dirname, join
-
-if environ.get('CYMUNK_USE_SETUPTOOLS'):
-    from setuptools import setup, Extension
-    print('Using setuptools')
-else:
-    from distutils.core import setup
-    from distutils.extension import Extension
-    print('Using distutils')
-
-try:
-    from Cython.Distutils import build_ext
-    have_cython = True
-except ImportError:
-    have_cython = False
-
+from os.path import join
+from setuptools import setup, Extension
 
 platform = sys.platform
-if platform == 'win32':
-	cstdarg = '-std=gnu99'
-else:
-	cstdarg = '-std=c99'
+cstdarg = '-std=gnu99' if platform == 'win32' else '-std=c99'
 c_chipmunk_root = join('cymunk', 'Chipmunk-Physics')
 c_chipmunk_src = join(c_chipmunk_root, 'src')
 c_chipmunk_incs = [
@@ -40,35 +22,27 @@ c_chipmunk_files = [join(c_chipmunk_src, x) for x in (
     'cpVect.c', 'cpPolyShape.c', 'cpSpaceComponent.c', 'cpBody.c',
     'cpHashSet.c')]
 
-if have_cython:
-    cymunk_files = [
-        'cymunk/cymunk.pyx'
-        ]
-    cmdclass = {'build_ext': build_ext}
-else:
-    cymunk_files = ['cymunk/cymunk.c']
-    cmdclass = {}
-
 extra_compile_args = [cstdarg, '-ffast-math', '-fPIC', '-DCHIPMUNK_FFI']
 
-if platform == "darwin":
+if platform == 'darwin':
     extra_compile_args += ['-Wno-implicit-function-declaration', '-Wno-incompatible-function-pointer-types']
-elif platform == "linux":
+elif platform == 'linux':
     extra_compile_args += ['-Wno-error=incompatible-pointer-types', '-Wno-error=implicit-function-declaration']
 
-ext = Extension('cymunk.cymunk',
-    cymunk_files + c_chipmunk_files,
+ext = Extension(
+    'cymunk.cymunk',
+    ['cymunk/cymunk.pyx'] + c_chipmunk_files,
     include_dirs=c_chipmunk_incs,
-    extra_compile_args=extra_compile_args)
+    extra_compile_args=extra_compile_args,
+)
  
 
 setup(
     name='cymunk',
-    cmdclass=cmdclass,
     packages=['cymunk'],
     package_data={'cymunk': ['*.pxd', '*.pxi', 'chipmunk/*.h',
-        'chipmunk/constraints/*.h']},
+                             'chipmunk/constraints/*.h']},
     package_dir={'cymunk': 'cymunk'},
     ext_modules=[ext],
-    version='0.0.0.dev0'
+    version='0.0.0.dev0',
 )
