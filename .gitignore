@@ -1,6 +1,25 @@
 *.swp
 *.pyc
-cymunk/python/cymunk.c
+cymunk/cymunk.c
 *.so
+*.DS_Store
 build
 docs/_build
+wheelhouse/
+uv.lock
+cymunk.egg-info
+
+
+# VS Code
+/.vscode
+
+# Jetbrain
+.idea
+
+# PyDev
+.project
+.pydevproject
+.settings/
+
+# Virtualenv
+venv
