@@ -22,10 +22,12 @@ if platform == 'win32':
 	cstdarg = '-std=gnu99'
 else:
 	cstdarg = '-std=c99'
-c_chipmunk_root = join(dirname(__file__), 'cymunk', 'Chipmunk-Physics')
+c_chipmunk_root = join('cymunk', 'Chipmunk-Physics')
 c_chipmunk_src = join(c_chipmunk_root, 'src')
-c_chipmunk_incs = [join(c_chipmunk_root, 'include'),
-        join(c_chipmunk_root, 'include', 'chipmunk')]
+c_chipmunk_incs = [
+    join(c_chipmunk_root, 'include'),
+    join(c_chipmunk_root, 'include', 'chipmunk')
+]
 c_chipmunk_files = [join(c_chipmunk_src, x) for x in (
     'cpSpatialIndex.c', 'cpSpaceHash.c', 'constraints/cpPivotJoint.c',
     'constraints/cpConstraint.c', 'constraints/cpSlideJoint.c',
@@ -62,9 +64,6 @@ ext = Extension('cymunk.cymunk',
 
 setup(
     name='cymunk',
-    description='Cython bindings for Chipmunk',
-    author='Mathieu Virbel and Nicolas Niemczycki',
-    author_email='mat@kivy.org',
     cmdclass=cmdclass,
     packages=['cymunk'],
     package_data={'cymunk': ['*.pxd', '*.pxi', 'chipmunk/*.h',
